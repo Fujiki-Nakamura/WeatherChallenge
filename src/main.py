@@ -20,6 +20,7 @@ if __name__ == '__main__':
     parser.add_argument('--resize_to', type=int, nargs='+', default=(672, 512))
     parser.add_argument('--crop_params', type=int, nargs='+', default=(130, 40, 340, 420))
     parser.add_argument('--random_crop_delta', type=int, default=0)
+    parser.add_argument('--smooth', type=str, default='step=25/minv=0/maxv=255')
     # network
     parser.add_argument('--model', type=str, default='convlstm_1_layer')
     parser.add_argument('--resume', type=str, default=None)
