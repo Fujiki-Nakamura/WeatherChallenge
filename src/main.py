@@ -71,7 +71,7 @@ if __name__ == '__main__':
     args.height = 672
     args.width = 512
     args.crop_params = (0, 0, 672, 512)
-    args.random_crop_delta = 25
+    args.random_crop_delta = 0
     args.batch_size = 16
     args.n_workers = 8
     # model
