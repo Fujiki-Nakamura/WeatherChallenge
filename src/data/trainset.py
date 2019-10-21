@@ -9,6 +9,8 @@ from torch.utils.data import Dataset
 from torchvision import transforms
 import torchvision.transforms.functional as F
 
+from .common import smooth
+
 
 input_range = 96
 target_range = 24
@@ -17,13 +19,22 @@ latest_dt = dt.datetime.strptime('2016/12/28 16:00', '%Y/%m/%d %H:%M')
 
 
 def get_transforms(args):
-    transform_input = transforms.Compose([
-        transforms.Lambda(lambda im: F.crop(im, *args.crop_params)),
-        transforms.Resize((args.input_h, args.input_w))
-    ])
-    transform_target = transforms.Compose([
-        transforms.Lambda(lambda im: F.crop(im, *args.crop_params)),
-    ])
+    compose_list = []
+    compose_list.append(transforms.Lambda(lambda im: F.crop(im, *args.crop_params)))
+    if args.smooth != '':
+        _kwargs = {
+            a.split('=')[0]: eval(a.split('=')[1])
+            for a in args.smooth.strip('/').split('/')}
+        compose_list.append(transforms.Lambda(lambda im: smooth(im, **_kwargs)))
+    compose_list.append(transforms.Resize((args.input_h, args.input_w)))
+    transform_input = transforms.Compose(compose_list)
+
+    compose_list = []
+    compose_list.append(transforms.Lambda(lambda im: F.crop(im, *args.crop_params)))
+    if args.smooth != '':
+        compose_list.append(transforms.Lambda(lambda im: smooth(im, **_kwargs)))
+    transform_target = transforms.Compose(compose_list)
+
     return transform_input, transform_target
 
 

@@ -20,6 +20,8 @@ if __name__ == '__main__':
     parser.add_argument('--resize_to', type=int, nargs='+', default=(672, 512))
     parser.add_argument('--crop_params', type=int, nargs='+', default=(130, 40, 340, 420))
     parser.add_argument('--random_crop_delta', type=int, default=0)
+    parser.add_argument(
+        '--smooth', type=str, default='step=25/minv=0/maxv=255/mode="mean"')
     # network
     parser.add_argument('--model', type=str, default='convlstm_1_layer')
     parser.add_argument('--resume', type=str, default=None)
@@ -70,15 +72,16 @@ if __name__ == '__main__':
     args.height = 672
     args.width = 512
     args.crop_params = (0, 0, 672, 512)
-    args.random_crop_delta = 25
-    args.batch_size = 16
+    args.random_crop_delta = 0
+    args.smooth = 'step=20/minv=0/maxv=255/mode=""'
+    args.batch_size = 32
     args.n_workers = 8
     # model
     args.model = 'encdec_02'
     factor = 8
     args.input_h, args.input_w = int(args.height / factor), int(args.width / factor)
     args.resize_to = (args.input_h, args.input_w)
-    args.hidden_dims = [8, 8, 8, ]
+    args.hidden_dims = [16, ]
     args.n_layers = len(args.hidden_dims)
     args.kernel_size = (5, 5)
     args.residual = False
