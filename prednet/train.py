@@ -14,6 +14,7 @@ from keras.layers import LSTM
 from keras.layers import TimeDistributed
 from keras.callbacks import LearningRateScheduler, ModelCheckpoint
 from keras.optimizers import Adam
+import pandas as pd
 
 from prednet import PredNet
 from data_utils import SequenceGenerator
@@ -78,6 +79,10 @@ if save_model:
 
 history = model.fit_generator(train_generator, samples_per_epoch / batch_size, nb_epoch, callbacks=callbacks,
                 validation_data=val_generator, validation_steps=N_seq_val / batch_size)
+try:  # TODO
+    pd.DataFrame(history.history).to_csv(os.path.join(RESULTS_SAVE_DIR, 'history.csv'))
+except:  # noqa
+    pass
 
 if save_model:
     json_string = model.to_json()
