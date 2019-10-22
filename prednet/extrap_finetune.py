@@ -29,13 +29,13 @@ DATA_DIR = '../inputs/hkl'
 WEIGHTS_DIR = './logs/{}'.format(EXP_ID)
 RESULTS_SAVE_DIR = './logs/{}'.format(EXP_ID)
 
-nt = 50
-nextrap = 20
+nt = 48
+nextrap = 24
 # starting at this time step,
 # the prediction from the previous time step will be treated as the actual input
 extrap_start_time = nt - nextrap
 orig_weights_file = os.path.join(WEIGHTS_DIR, 'weights.hdf5')  # original t+1 weights
-orig_json_file = os.path.join(WEIGHTS_DIR, 'prednet_kitti_model.json')
+orig_json_file = os.path.join(WEIGHTS_DIR, 'model.json')
 
 save_model = True
 # where new weights will be saved
@@ -45,10 +45,10 @@ extrap_json_file = os.path.join(
     WEIGHTS_DIR, 'model-extrapfinetuned-{}-{}.json'.format(nt, nextrap))
 
 # Data files
-train_file = os.path.join(DATA_DIR, 'X_train.hkl')
-train_sources = os.path.join(DATA_DIR, 'sources_train.hkl')
-val_file = os.path.join(DATA_DIR, 'X_val.hkl')
-val_sources = os.path.join(DATA_DIR, 'sources_val.hkl')
+train_file = os.path.join(DATA_DIR, 'X_2016_168x128.hkl')
+train_sources = os.path.join(DATA_DIR, 'source_2016_168x128.hkl')
+val_file = os.path.join(DATA_DIR, 'X_2017_168x128.hkl')
+val_sources = os.path.join(DATA_DIR, 'source_2017_168x128.hkl')
 
 # Training parameters
 nb_epoch = 150
