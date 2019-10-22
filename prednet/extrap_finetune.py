@@ -9,6 +9,7 @@ from keras.models import Model, model_from_json
 from keras import backend as K
 import os
 import numpy as np
+import pandas as pd
 np.random.seed(123)
 
 
@@ -98,6 +99,8 @@ if save_model:
 history = model.fit_generator(
     train_generator, samples_per_epoch / batch_size, nb_epoch, callbacks=callbacks,
     validation_data=val_generator, validation_steps=N_seq_val / batch_size)
+
+pd.DataFrame(history.history).to_csv(os.path.join(RESULTS_SAVE_DIR, 'history.csv'))
 
 if save_model:
     json_string = model.to_json()
