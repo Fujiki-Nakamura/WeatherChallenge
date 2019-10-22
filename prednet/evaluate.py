@@ -7,12 +7,11 @@ from data_utils import SequenceGenerator
 from prednet import PredNet
 from keras.layers import Input
 from keras.models import Model, model_from_json
-import matplotlib.gridspec as gridspec
-import matplotlib.pyplot as plt
 import os
 import numpy as np
-import matplotlib
-matplotlib.use('Agg')
+import matplotlib; matplotlib.use('Agg')  # noqa
+import matplotlib.pyplot as plt
+import matplotlib.gridspec as gridspec
 
 
 n_plot = 40
@@ -80,14 +79,22 @@ plot_idx = np.random.permutation(X_test.shape[0])[:n_plot]
 for i in plot_idx:
     for t in range(nt):
         plt.subplot(gs[t])
-        plt.imshow(X_test[i, t], interpolation='none')
+        X_true = X_test[i, t]
+        if X_true.shape[2] == 1:
+            plt.imshow(X_test[i, t, :, :, 0], interpolation='none', cmap='gray')
+        else:
+            plt.imshow(X_test[i, t], interpolation='none')
         plt.tick_params(axis='both', which='both', bottom='off', top='off',
                         left='off', right='off', labelbottom='off', labelleft='off')
         if t == 0:
             plt.ylabel('Actual', fontsize=10)
 
         plt.subplot(gs[t + nt])
-        plt.imshow(X_hat[i, t], interpolation='none')
+        X_pred = X_hat[i, t]
+        if X_pred.shape[2] == 1:
+            plt.imshow(X_pred[:, :, 0], interpolation='none', cmap='gray')
+        else:
+            plt.imshow(X_pred, interpolation='none')
         plt.tick_params(axis='both', which='both', bottom='off', top='off',
                         left='off', right='off', labelbottom='off', labelleft='off')
         if t == 0:
