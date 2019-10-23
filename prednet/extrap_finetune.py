@@ -100,7 +100,7 @@ history = model.fit_generator(
     train_generator, samples_per_epoch / batch_size, nb_epoch, callbacks=callbacks,
     validation_data=val_generator, validation_steps=N_seq_val / batch_size)
 
-pd.DataFrame(history.history).to_csv(os.path.join(RESULTS_SAVE_DIR, 'history.csv'))
+pd.DataFrame(history.history).to_csv(os.path.join(RESULTS_SAVE_DIR, 'history_ext.csv'))
 
 if save_model:
     json_string = model.to_json()
