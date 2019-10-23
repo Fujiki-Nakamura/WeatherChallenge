@@ -20,6 +20,12 @@ EXP_ID = dt.datetime.now().strftime('%Y%m%d%H%M%S')
 DATA_DIR = '../inputs/hkl'
 WEIGHTS_DIR = './logs/{}'.format(EXP_ID)
 RESULTS_SAVE_DIR = './logs/{}'.format(EXP_ID)
+if not os.path.exists(WEIGHTS_DIR):
+    os.mkdir(WEIGHTS_DIR)
+    os.chmod(WEIGHTS_DIR, 0o0777)
+if not os.path.exists(RESULTS_SAVE_DIR):
+    os.mkdir(RESULTS_SAVE_DIR)
+    os.chmod(RESULTS_SAVE_DIR, 0o0777)
 
 
 def main():
@@ -85,6 +91,7 @@ def main():
     if save_model:
         if not os.path.exists(WEIGHTS_DIR):
             os.mkdir(WEIGHTS_DIR)
+            os.chmod(WEIGHTS_DIR, 0o0777)
         callbacks.append(ModelCheckpoint(filepath=weights_file,
                                          monitor='val_loss', save_best_only=True))
 
