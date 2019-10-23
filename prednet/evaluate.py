@@ -16,7 +16,7 @@ import matplotlib.gridspec as gridspec
 
 n_plot = 40
 batch_size = 10
-nt = 10
+nt = 24
 
 EXP_ID = ''
 DATA_DIR = '../inputs/hkl'
