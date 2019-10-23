@@ -24,10 +24,10 @@ def extrap_loss(y_true, y_hat):
     return 0.5 * K.mean(K.abs(y_true - y_hat), axis=-1)
 
 
-EXP_ID = ''
-DATA_DIR = '../inputs/hkl'
-WEIGHTS_DIR = './logs/{}'.format(EXP_ID)
-RESULTS_SAVE_DIR = './logs/{}'.format(EXP_ID)
+EXP_ID = '20191022064146'
+DATA_DIR = '../inputs/hkl/'
+WEIGHTS_DIR = './logs/{}/'.format(EXP_ID)
+RESULTS_SAVE_DIR = './logs/{}/'.format(EXP_ID)
 
 nt = 48
 nextrap = 24
