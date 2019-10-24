@@ -14,19 +14,19 @@ import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 
 
-n_plot = 40
+n_plot = 50
 batch_size = 10
 nt = 24
 
-EXP_ID = ''
-DATA_DIR = '../inputs/hkl'
-WEIGHTS_DIR = './logs/{}'.format(EXP_ID)
-RESULTS_SAVE_DIR = './logs/{}'.format(EXP_ID)
+EXP_ID = '20191023150622'
+DATA_DIR = '../inputs/hkl/'
+WEIGHTS_DIR = './logs/{}/'.format(EXP_ID)
+RESULTS_SAVE_DIR = './logs/{}/'.format(EXP_ID)
 
 weights_file = os.path.join(WEIGHTS_DIR, 'weights.hdf5')
 json_file = os.path.join(WEIGHTS_DIR, 'model.json')
-test_file = os.path.join(DATA_DIR, 'X_2017_168x128.hkl')
-test_sources = os.path.join(DATA_DIR, 'source_2017_168x128.hkl')
+test_file = os.path.join(DATA_DIR, 'X_test_2018_168x128.hkl')
+test_sources = os.path.join(DATA_DIR, 'source_test_2018_168x128.hkl')
 
 # Load trained model
 f = open(json_file, 'r')

@@ -24,7 +24,7 @@ def extrap_loss(y_true, y_hat):
     return 0.5 * K.mean(K.abs(y_true - y_hat), axis=-1)
 
 
-EXP_ID = '20191022064146'
+EXP_ID = '20191023150622'
 DATA_DIR = '../inputs/hkl/'
 WEIGHTS_DIR = './logs/{}/'.format(EXP_ID)
 RESULTS_SAVE_DIR = './logs/{}/'.format(EXP_ID)
@@ -45,10 +45,10 @@ extrap_json_file = os.path.join(
     WEIGHTS_DIR, 'model-extrapfinetuned-{}-{}.json'.format(nt, nextrap))
 
 # Data files
-train_file = os.path.join(DATA_DIR, 'X_2016_168x128.hkl')
-train_sources = os.path.join(DATA_DIR, 'source_2016_168x128.hkl')
-val_file = os.path.join(DATA_DIR, 'X_2017_168x128.hkl')
-val_sources = os.path.join(DATA_DIR, 'source_2017_168x128.hkl')
+train_file = os.path.join(DATA_DIR, 'X_2016+2017_168x128.hkl')
+train_sources = os.path.join(DATA_DIR, 'source_2016+2017_168x128.hkl')
+val_file = os.path.join(DATA_DIR, 'X_test_2018_168x128.hkl')
+val_sources = os.path.join(DATA_DIR, 'source_test_2018_168x128.hkl')
 
 # Training parameters
 nb_epoch = 150
