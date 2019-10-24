@@ -42,9 +42,9 @@ def main():
 
     # Training parameters
     nb_epoch = 150
-    batch_size = 8
-    samples_per_epoch = 500
-    N_seq_val = 100  # number of sequences to use for validation
+    batch_size = 16
+    samples_per_epoch = 5000
+    N_seq_val = 500  # number of sequences to use for validation
 
     # Model parameters
     n_channels, im_height, im_width = (1, 168, 128)
