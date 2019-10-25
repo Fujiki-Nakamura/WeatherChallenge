@@ -15,9 +15,16 @@ hr_range_target = 24
 
 
 def get_transforms(args):
+    if args.interpolation_mode == 'bilinear':
+        _interpolation = Image.BILINEAR
+    elif args.interpolation_mode == 'nearest':
+        _interpolation = Image.NEAREST
+    else:
+        raise NotImplementedError('{} not implemented.'.format(args.interpolation_mode))
+
     transform_input = transforms.Compose([
         transforms.Lambda(lambda im: F.crop(im, *args.crop_params)),
-        transforms.Resize((args.input_h, args.input_w))
+        transforms.Resize((args.input_h, args.input_w), interpolation=_interpolation)
     ])
     transform_target = transforms.Compose([
         transforms.Lambda(lambda im: F.crop(im, *args.crop_params)),
