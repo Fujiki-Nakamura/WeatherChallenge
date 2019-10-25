@@ -73,15 +73,16 @@ if __name__ == '__main__':
     args.width = 512
     args.crop_params = (0, 0, 672, 512)
     args.random_crop_delta = 0
-    args.smooth = 'step=20/minv=0/maxv=255/mode=""'
-    args.batch_size = 32
+    args.smooth = ''
+    args.interpolation_mode = 'nearest'
+    args.batch_size = 16
     args.n_workers = 8
     # model
     args.model = 'encdec_02'
     factor = 8
     args.input_h, args.input_w = int(args.height / factor), int(args.width / factor)
     args.resize_to = (args.input_h, args.input_w)
-    args.hidden_dims = [16, ]
+    args.hidden_dims = [8, 8, 8, ]
     args.n_layers = len(args.hidden_dims)
     args.kernel_size = (5, 5)
     args.residual = False
