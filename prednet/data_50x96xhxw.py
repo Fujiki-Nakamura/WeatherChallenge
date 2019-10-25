@@ -41,7 +41,7 @@ def create_test_data(csvpath, target=False):
             fname = f'{dname}-{h:0>2}-00.fv.png'
             impath = data_d/dname/fname
             if impath.is_file():
-                im = Image.open(impath)
+                im = Image.open(impath).convert('L')
                 im = im.resize((width, height))
                 im = np.asarray(im)[:, :, np.newaxis]
             else:
