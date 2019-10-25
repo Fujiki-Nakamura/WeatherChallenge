@@ -1,9 +1,17 @@
 import os
 import shutil
+
 import torch
 from torch import nn, optim
+import torchvision.utils as vutils
 import adabound
 from RAdam import RAdam
+import models
+
+
+def get_model(args):
+    model = models.__dict__[args.model](args=args)
+    return model
 
 
 def get_loss_fn(args):
@@ -17,8 +25,7 @@ def get_loss_fn(args):
         loss_fn = nn.SmoothL1Loss(reduction='mean')
     else:
         raise NotImplementedError
-    valid_loss_fn = nn.L1Loss(reduction='mean')
-    return loss_fn, valid_loss_fn
+    return loss_fn
 
 
 def get_optimizer(model, optim_str):
@@ -51,6 +58,37 @@ def get_scheduler(optimizer, args):
     return scheduler
 
 
+def resume(resume, model, optimizer, start_epoch, best):
+    if os.path.isfile(resume):
+        checkpoint = torch.load(resume)
+        start_epoch = checkpoint['epoch'] + 1
+        best['L1'] = checkpoint['best/L1']
+        best['MAE'] = checkpoint['best/MAE']
+        model.load_state_dict(checkpoint['state_dict'])
+        optimizer.load_state_dict(checkpoint['optimizer'])
+    else:
+        raise IOError('No such file {}'.format(resume))
+
+    return model, optimizer, start_epoch, best
+
+
+def save_checkpoint(state, is_best, log_dir):
+    filename = os.path.join(log_dir, 'checkpoint.pt')
+    torch.save(state, filename)
+    if is_best[0]:
+        shutil.copyfile(filename, os.path.join(log_dir, 'bestMAE.pt'))
+    if is_best[1]:
+        shutil.copyfile(filename, os.path.join(log_dir, 'bestL1.pt'))
+
+
+def get_images(output, args):
+    nrow = 6
+    # (bs, ts, h, w) -> (bs, ts, c, h, w) -> (bs * ts, c, h, w)
+    _ims = output.unsqueeze(2).contiguous().view(-1, args.channels, 420, 340)
+    return vutils.make_grid(
+        _ims, nrow=nrow, scale_each=True, normalize=True, range=(0, 255))
+
+
 def get_logger(log_file):
     from logging import getLogger, FileHandler, StreamHandler
     from logging import Formatter, DEBUG, INFO
@@ -70,15 +108,6 @@ def get_logger(log_file):
 
 def get_choices(choice_list):
     return choice_list + list(map(lambda s: s.lower(), choice_list))
-
-
-def save_checkpoint(state, is_best, log_dir):
-    filename = os.path.join(log_dir, 'checkpoint.pt')
-    torch.save(state, filename)
-    if is_best[0]:
-        shutil.copyfile(filename, os.path.join(log_dir, 'bestMAE.pt'))
-    if is_best[1]:
-        shutil.copyfile(filename, os.path.join(log_dir, 'bestL1.pt'))
 
 
 class AverageMeter(object):

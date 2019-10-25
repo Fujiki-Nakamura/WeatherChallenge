@@ -1,119 +1,65 @@
-import numpy as np
 import torch
 from tqdm import tqdm
 from utils import AverageMeter
 
 
-hr_range_target = 24
+target_ts = 24
 mae_fn = torch.nn.L1Loss(reduction='mean')
-indices = [i for i in range(hr_range_target) if i % 6 == 5]
+eval_indices = [i for i in range(target_ts) if i % 6 == 5]
 
 
-def train(dataloader, model, criterion, optimizer, logger=None, args=None):
-    model.train()
+def train(
+    dataloader, model, criterion, optimizer, is_training=True, logger=None, args=None
+):
+    if is_training:
+        model.train()
+    else:
+        model.eval()
     losses = AverageMeter()
-    losses_255 = AverageMeter()
-    maes = AverageMeter()
-    grads = grads_clipped = 0.
-    grad_norm = 0.
+    L1s = AverageMeter()
+    MAEs = AverageMeter()
+
     pbar = tqdm(total=len(dataloader))
-    for i, (inputs, targets, _, _) in enumerate(dataloader):
-        bs, ts, h, w = targets[0].size()
-        outputs, loss, loss_255, mae, output_255_eval, target_255_eval = step(
-            inputs, targets, model, criterion, args=args)
-        n = bs * ts * h * w
-        losses.update(loss.item(), n)
-        losses_255.update(loss_255.item(), n)
-        maes.update(mae.item(), bs * ts / 6 * h * w)
+    for data, _ in dataloader:
+        with torch.set_grad_enabled(is_training):
+            bs, _, h, w, c = data[0].size()
+            output, loss, L1, MAE = step(data, model, criterion, args=args)
+            n = bs * target_ts * h * w * c
+            losses.update(loss.item(), n)
+            L1s.update(L1.item(), n)
+            MAEs.update(MAE.item(), bs * int(target_ts / 6) * h * w)
 
-        optimizer.zero_grad()
-        loss.backward()
-        grads += np.sqrt(sum(
-            [p.grad.data.pow(2).sum().item() for p in model.parameters()]))
-        if args.max_norm > 0.:
-            grad_norm += torch.nn.utils.clip_grad_norm_(model.parameters(), args.max_norm)
-        grads_clipped += np.sqrt(sum(
-            [p.grad.data.pow(2).sum().item() for p in model.parameters()]))
-        optimizer.step()
+            if is_training:
+                optimizer.zero_grad()
+                loss.backward()
+                optimizer.step()
 
         if args.debug: break  # noqa
-
         pbar.update(1)
     pbar.close()
 
-    logger.debug('Train/Loss {:.4f}'.format(losses.avg))
-
     return {
-        'loss': losses_255.avg, 'mae': maes.avg,
-        'pred': output_255_eval, 'true': target_255_eval,
-        'grad/L2/BeforeClipped': grads / len(dataloader),
-        'grad/L2/Clipped': grads_clipped / len(dataloader),
-        'grad/L2/Mean': grad_norm / len(dataloader),
+        'loss': L1s.avg, 'mae': MAEs.avg,
     }
 
 
-def validate(dataloader, model, criterion, logger=None, args=None):
-    model.eval()
-    losses = AverageMeter()
-    losses_255 = AverageMeter()
-    maes = AverageMeter()
-    pbar = tqdm(total=(len(dataloader)))
-    for i, (inputs, targets, _, _) in enumerate(dataloader):
-        bs, ts, h, w = targets[0].size()
-        with torch.no_grad():
-            outputs, loss, loss_255, mae, output_255_eval, target_255_eval = step(
-                inputs, targets, model, criterion, args=args, mode='valid')
-        n = bs * ts * h * w
-        losses.update(loss.item(), n)
-        losses_255.update(loss_255.item(), n)
-        maes.update(mae.item(), bs * ts / 6 * h * w)
+def step(data, model, criterion, args):
+    input_ = data[0].to(args.device)
+    target = data[1].to(args.device)
+    # (bs, ts, h, w, c) -> (bs, ts, c, h, w)
+    input_ = input_.permute(0, 1, 4, 2, 3)
+    target = target.permute(0, 1, 4, 2, 3)
 
-        if args.debug: break  # noqa
-
-        pbar.update(1)
-    pbar.close()
-
-    logger.debug('Valid/Loss {:.4f}'.format(losses.avg))
-
-    return {
-        'loss': losses_255.avg, 'mae': maes.avg,
-        'pred': output_255_eval, 'true': target_255_eval,
-    }
-
-
-def step(inputs, targets, model, criterion, args, mode='train'):
-    targets, target_255 = targets
-
-    # (bs, ts, h, w) -> (bs, ts, c, h, w)
-    inputs = inputs.unsqueeze(2)
-    inputs, targets = inputs.to(args.device), targets.to(args.device)
-    target_255 = target_255.to(args.device)
-
-    outputs = model(inputs, targets.unsqueeze(2))
-    output_255 = (outputs * 255).round()
-
-    # (bs, ts, c, h, w) -> (bs, ts, h, w) -> (ts, bs, h, w)
-    outputs = outputs.squeeze(2).permute(1, 0, 2, 3)
-    output_255 = output_255.squeeze(2).permute(1, 0, 2, 3)
-    # (bs, ts, h, w) -> (ts, bs, h, w)
-    targets = targets.permute(1, 0, 2, 3)
-    target_255 = target_255.permute(1, 0, 2, 3)
-
-    loss = 0.
-    loss_255 = 0
-    loss += criterion(outputs, targets)
-    loss_255 += criterion(output_255, target_255)
+    output = model((input_ / 255.).float(), (target / 255.).float())
+    loss = criterion(output, (target / 255.).float())
+    L1 = criterion((output * 255.).round(), target.float())
 
     # loss as to 6/12/18/24hr
-    assert len(outputs) == len(targets) == hr_range_target
-    output_255 = output_255[:, :, 40:460, 130:470]
-    target_255 = target_255[:, :, 40:460, 130:470]
-    output_255_eval = output_255[indices]
-    target_255_eval = target_255[indices]
-    mae = mae_fn(output_255_eval, target_255_eval)
+    assert output.size()[1] == target.size()[1] == target_ts
+    output_eval = (output * 255.).round()[:, :, :, 40:460, 130:470]
+    target_eval = target[:, :, :, 40:460, 130:470]
+    output_eval = output_eval[:, eval_indices, :, :, :]
+    target_eval = target_eval[:, eval_indices, :, :, :]
+    MAE = mae_fn(output_eval, target_eval.float())
 
-    return (
-        outputs, loss, loss_255, mae,
-        # batch_first
-        output_255.permute(1, 0, 2, 3), target_255.permute(1, 0, 2, 3),
-    )
+    return output, loss, L1, MAE
