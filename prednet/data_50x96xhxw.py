@@ -56,8 +56,14 @@ def create_test_data(csvpath, target=False):
     assert len(df) == len(X)
 
     data_type = 'y' if target else 'X'
-    split_type = 'valid' if 'valid' in csvpath else 'test'
-    path = OUTPUT_D/f'{data_type}_{split_type}_{height}x{width}.hkl'
+    if 'train' in csvpath:
+        y = 2016
+    elif 'valid' in csvpath:
+        y = 2017
+    else:
+        y = 2018
+    n, l, h, w, c = X.shape
+    path = OUTPUT_D/f'{data_type}_{y}_{n}x{l}x{h}x{w}x{c}.hkl'
     hkl.dump(X, path.as_posix())
     print(f'Dumped at {path}')
 
