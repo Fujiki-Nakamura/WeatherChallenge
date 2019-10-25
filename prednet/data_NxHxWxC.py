@@ -38,7 +38,7 @@ def dump_hkl(start, end, datetime_format='%Y-%m-%d %H:%M'):
             im = np.zeros((height, width, channel))
             print(f'File not found: {fname}', file=logf)
         im_list.append(im)
-        source_list.append(f'year')
+        source_list.append(f'{year}')
         current_dt = current_dt + dt.timedelta(hours=1)
 
     X = np.stack(im_list, axis=0)
