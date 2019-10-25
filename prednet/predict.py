@@ -2,6 +2,7 @@
 Evaluate trained PredNet on KITTI sequences.
 Calculates mean-squared error and plots predictions.
 '''
+import datetime as dt
 import os
 import sys
 
@@ -28,6 +29,7 @@ input_h, input_w, input_c = 168, 128, 1
 TARGET_TS = 24
 sample_submit = '../inputs/sample_submit.csv'
 
+ID = dt.datetime.now().strftime('%Y%m%d%H%M%S')
 EXP_ID = '20191022064146'
 DATA_DIR = '../inputs/hkl/'
 WEIGHTS_DIR = './logs/{}/'.format(EXP_ID)
@@ -103,7 +105,7 @@ def main():
         df = pd.read_csv(sample_submit, header=None)
         df.loc[:, 1:] = preds_eval.reshape(-1, eval_w)
         df = df.astype(int)
-        path = os.path.join(RESULTS_SAVE_DIR, 'submission.csv')
+        path = os.path.join(RESULTS_SAVE_DIR, 'submission_{}.csv'.format(ID))
         df.to_csv(path, index=False, header=False)
         print('Submission saved at {}'.format(path))
     else:
