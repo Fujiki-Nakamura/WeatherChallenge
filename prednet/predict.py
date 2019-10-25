@@ -34,7 +34,7 @@ EXP_ID = '20191022064146'
 DATA_DIR = '../inputs/hkl/'
 WEIGHTS_DIR = './logs/{}/'.format(EXP_ID)
 RESULTS_SAVE_DIR = './logs/{}/'.format(EXP_ID)
-INPUT_PATH = os.path.join(DATA_DIR, 'X_valid_168x128.hkl')
+INPUT_PATH = os.path.join(DATA_DIR, 'X_test_168x128.hkl')
 TARGET_PATH = os.path.join(DATA_DIR, 'y_valid_168x128.hkl')
 is_making_submission = True
 PLOT = False
@@ -93,7 +93,7 @@ def main():
         X_test_inp = np.transpose(X_test_inp, (0, 1, 3, 4, 2))
         X_hat = np.transpose(X_hat, (0, 1, 3, 4, 2))
 
-    X_hat = np.round(X_hat * 255).clip(0, 255)
+    X_hat = (255. - np.round(X_hat * 255)).clip(0, 255)
     if is_making_submission:
         X_hat = resize(X_hat)
         X_hat = X_hat[:, -last_n_timestep:]
