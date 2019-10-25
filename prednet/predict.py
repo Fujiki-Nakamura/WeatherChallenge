@@ -23,21 +23,24 @@ n_plot = 50
 batch_size = 10
 nt = 48
 extrap_start_time = 24
-last_n_timestep = 24
+last_n_timestep = 0  # 24
 input_h, input_w, input_c = 168, 128, 1
 TARGET_TS = 24
 sample_submit = '../inputs/sample_submit.csv'
 
-EXP_ID = '20191022064146'
+EXP_ID = '20191023150622'
 DATA_DIR = '../inputs/hkl/'
 WEIGHTS_DIR = './logs/{}/'.format(EXP_ID)
 RESULTS_SAVE_DIR = './logs/{}/'.format(EXP_ID)
-INPUT_PATH = os.path.join(DATA_DIR, 'X_valid_168x128.hkl')
+# INPUT_PATH = os.path.join(DATA_DIR, 'X_2016_168x128.hkl')
+# INPUT_PATH = os.path.join(DATA_DIR, 'X_valid_168x128.hkl')
 TARGET_PATH = os.path.join(DATA_DIR, 'y_valid_168x128.hkl')
-is_making_submission = True
+INPUT_PATH = os.path.join(DATA_DIR, 'X_test_2018_168x128.hkl')
+INPUT_PATH = os.path.join(DATA_DIR, 'X_test_168x128.hkl')
+is_making_submission = False
 PLOT = False
-valid = False
-test = True
+valid = True
+test = False
 
 
 def resize(X):
@@ -77,15 +80,18 @@ def main():
     test_model = Model(inputs=inputs, outputs=predictions)
 
     X_test = hkl.load(INPUT_PATH)
+    X_test = X_test[:, :nt]
     zeros = np.zeros((len(X_test), nt - last_n_timestep, input_h, input_w, input_c))
-    y_test = hkl.load(TARGET_PATH) if valid else zeros
+    # y_test = hkl.load(TARGET_PATH) if valid else zeros
+    y_test = X_test[:, 24:]
     X_test_inp = X_test / 255.
     if last_n_timestep > 0:
         X_test_inp = X_test_inp[:, -last_n_timestep:]
         X_test_inp = np.concatenate([X_test_inp, zeros], axis=1)
     if data_format == 'channels_first':
         X_test_inp = X_test_inp.transpose((0, 1, 4, 2, 3))
-    assert np.sum(X_test_inp[:, -last_n_timestep:]) == 0.
+    if last_n_timestep > 0:
+        assert np.sum(X_test_inp[:, -last_n_timestep:]) == 0.
     X_hat = test_model.predict(X_test_inp, batch_size)
     if data_format == 'channels_first':
         X_test_inp = np.transpose(X_test_inp, (0, 1, 3, 4, 2))
@@ -108,15 +114,18 @@ def main():
         print('Submission saved at {}'.format(path))
     else:
         if not PLOT:
-            X_hat = resize(X_hat)
+            # X_hat = resize(X_hat)
             # MAE
-            MAE = np.mean(np.abs(y_test - X_hat[:, -last_n_timestep:]))
-            MAE_eval = np.mean(np.abs(
-                crop_eval_area(y_test) - crop_eval_area(X_hat[:, -last_n_timestep:])))
+            # MAE = np.mean(np.abs(y_test - X_hat[:, -last_n_timestep:]))
+            MAE = np.mean(np.abs(y_test - X_hat[:, 24:]))
+            # MAE_eval = np.mean(np.abs(
+            #     crop_eval_area(y_test) - crop_eval_area(X_hat[:, -last_n_timestep:])))
+            MAE_eval = -1
             print('MAE/Valid {:.4f} MAE-eval/Valid {:.4f}'.format(MAE, MAE_eval))
             sys.exit(0)
 
-        X_test = np.concatenate([X_test[:, -last_n_timestep:], y_test], axis=1)
+        if last_n_timestep > 0:
+            X_test = np.concatenate([X_test[:, -last_n_timestep:], y_test], axis=1)
         # Plot some predictions
         aspect_ratio = float(X_hat.shape[2]) / X_hat.shape[3]
         plt.figure(figsize=(nt, 2*aspect_ratio))
