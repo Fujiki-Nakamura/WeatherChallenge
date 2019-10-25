@@ -42,10 +42,10 @@ def dump_hkl(start, end, datetime_format='%Y-%m-%d %H:%M'):
         current_dt = current_dt + dt.timedelta(hours=1)
 
     X = np.stack(im_list, axis=0)
-    path = output_d/f'X_{year}_{height}x{width}.hkl'
+    path = output_d/f'X_{year}_{height}x{width}x{channel}.hkl'
     hkl.dump(X, path.as_posix())
     print(f'Dumped at {path}')
-    path = output_d/f'source_{year}_{height}x{width}.hkl'
+    path = output_d/f'source_{year}_{height}x{width}x{channel}.hkl'
     hkl.dump(source_list, path.as_posix())
     print(f'Dumped at {path}')
 
