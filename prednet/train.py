@@ -35,16 +35,16 @@ def main():
     json_file = os.path.join(WEIGHTS_DIR, 'model.json')
 
     # Data files
-    train_file = os.path.join(DATA_DIR, 'X_2016+2017_168x128.hkl')
-    train_sources = os.path.join(DATA_DIR, 'source_2016+2017_168x128.hkl')
-    val_file = os.path.join(DATA_DIR, 'X_test_2018_168x128.hkl')
-    val_sources = os.path.join(DATA_DIR, 'source_test_2018_168x128.hkl')
+    train_file = os.path.join(DATA_DIR, 'X_2016+2017_168x128x1.hkl')
+    train_sources = os.path.join(DATA_DIR, 'source_2016+2017_168x128x1.hkl')
+    val_file = os.path.join(DATA_DIR, 'X_2018_168x128x1.hkl')
+    val_sources = os.path.join(DATA_DIR, 'source_2018_168x128x1.hkl')
 
     # Training parameters
     nb_epoch = 150
     batch_size = 16
-    samples_per_epoch = 5000
-    N_seq_val = 500  # number of sequences to use for validation
+    samples_per_epoch = 500
+    N_seq_val = 100  # number of sequences to use for validation
 
     # Model parameters
     n_channels, im_height, im_width = (1, 168, 128)
