@@ -24,7 +24,7 @@ def extrap_loss(y_true, y_hat):
     return 0.5 * K.mean(K.abs(y_true - y_hat), axis=-1)
 
 
-EXP_ID = '20191023150622'
+EXP_ID = '20191025061613'
 DATA_DIR = '../inputs/hkl/'
 WEIGHTS_DIR = './logs/{}/'.format(EXP_ID)
 RESULTS_SAVE_DIR = './logs/{}/'.format(EXP_ID)
