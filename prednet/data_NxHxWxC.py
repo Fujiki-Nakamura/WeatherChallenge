@@ -9,6 +9,8 @@ from PIL import Image
 factor = 4
 height, width = int(672 / factor), int(512 / factor)
 channel = 1
+inputs_d = Path('../inputs')
+output_d = inputs_d/'hkl/'
 
 
 def dump_hkl(start, end, datetime_format='%Y-%m-%d %H:%M'):
@@ -18,9 +20,7 @@ def dump_hkl(start, end, datetime_format='%Y-%m-%d %H:%M'):
     year = start_dt.year
 
     logf = open(f'../inputs/missing_{year}.list', 'a')
-    inputs_d = Path('../inputs')
     data_d = inputs_d/'test/sat/' if year == 2018 else inputs_d/'train/sat/'
-    output_d = inputs_d/'hkl/'
 
     im_list = []
     source_list = []
@@ -51,8 +51,15 @@ def dump_hkl(start, end, datetime_format='%Y-%m-%d %H:%M'):
 
     logf.close()
 
+    return X, source_list
+
 
 if __name__ == '__main__':
-    # dump_hkl('2016-01-01 00:00', '2016-12-31 23:00')
-    # dump_hkl('2017-01-01 00:00', '2017-12-31 23:00')
+    X_2016, source_2016 = dump_hkl('2016-01-01 00:00', '2016-12-31 23:00')
+    X_2017, source_2017 = dump_hkl('2017-01-01 00:00', '2017-12-31 23:00')
     dump_hkl('2018-01-01 00:00', '2018-12-31 23:00')
+
+    p = output_d/f'X_2016+2017_{height}x{width}x{channel}.hkl'
+    hkl.dump(np.concatenate([X_2016, X_2017], axis=0), p.as_posix())
+    p = output_d/f'source_2016+2017_{height}x{width}x{channel}.hkl'
+    hkl.dump(source_2016 + source_2017, p.as_posix())
