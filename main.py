@@ -5,7 +5,7 @@ from experiment import run
 
 def main(args):
     args.model = 'encdec_clf'
-    args.output_c = 10
+    args.output_c = 15
     args.hidden_dims = [16, ]
     args.n_layers = len(args.hidden_dims)
     args.batch_size = 8
