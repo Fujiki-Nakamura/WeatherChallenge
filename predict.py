@@ -74,13 +74,17 @@ def main():
     predictions = test_prednet(inputs)
     test_model = Model(inputs=inputs, outputs=predictions)
 
-    X_test = hkl.load(INPUT_PATH)[:, :nt]
-    y_test = hkl.load(TARGET_PATH)[:, :nt][:, input_ts:]
-    # zeros = np.zeros((len(X_test), nt - input_ts, input_h, input_w, input_c))
+    if is_making_submission:
+        X_test = hkl.load(INPUT_PATH)[:, -input_ts:]
+        zeros = np.zeros((len(X_test), nt - input_ts, input_h, input_w, input_c))
+        X_test = np.concatenate([X_test, zeros], axis=1)
+    else:
+        X_test = hkl.load(INPUT_PATH)[:, :nt]
+        y_test = hkl.load(TARGET_PATH)[:, :nt][:, input_ts:]
+    assert X_test.shape[1] == nt
     X_test_inp = X_test / 255.
     if data_format == 'channels_first':
         X_test_inp = X_test_inp.transpose((0, 1, 4, 2, 3))
-    # assert np.sum(X_test_inp[:, -last_n_timestep:]) == 0.
     X_hat = test_model.predict(X_test_inp, batch_size)
     assert X_hat.shape[1] == nt
     if data_format == 'channels_first':
@@ -89,8 +93,7 @@ def main():
 
     X_hat = np.round(X_hat * 255).clip(0, 255)
     if is_making_submission:
-        X_hat = resize(X_hat)
-        X_hat = X_hat[:, input_ts:]
+        X_hat = resize(X_hat[:, -input_ts:])
         assert X_hat.shape[1] == TARGET_TS
         # make submission
         indices = [i for i in range(TARGET_TS) if i % 6 == 5]
