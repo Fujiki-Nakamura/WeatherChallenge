@@ -142,11 +142,20 @@ if __name__ == '__main__':
 
     _logdir = '../logs/20191026020439/'
     args.checkpoint = os.path.join(_logdir, 'bestMAE.pt')
+    args.model = 'encdec_02'
+    args.hidden_dims = [8, 8, 8, ]
+    args.n_layers = len(args.hidden_dims)
+    args.loss = 'L1'
+    args.logit_output = False
+    args.teacher_forcing_ratio = -1
+    args.residual = False
 
+    '''
     logdir = os.path.dirname(args.checkpoint)
     logpath = os.path.join(logdir, 'main.log')
     with open(logpath, 'r') as f:
         first_line = f.readline()
         saved_args = eval(first_line.split(' - ')[-1])
     saved_args.__dict__.update(args.__dict__)
-    main(saved_args)
+    '''
+    main(args)
