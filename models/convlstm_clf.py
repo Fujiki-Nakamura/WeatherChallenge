@@ -1,6 +1,6 @@
-import random
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 from torch.autograd import Variable
 
 
@@ -89,8 +89,8 @@ class ConvLSTM(nn.Module):
 
     def __init__(
         self, input_size, input_dim, output_c, hidden_dim, kernel_size, num_layers,
-        batch_first=False, bias=True, return_all_layers=False, teacher_forcing_ratio=0.,
-        weight_init='', residual=False
+        class2value_list,
+        batch_first=False, bias=True, return_all_layers=False, weight_init='',
     ):
         super(ConvLSTM, self).__init__()
 
@@ -107,15 +107,14 @@ class ConvLSTM(nn.Module):
 
         self.input_dim = input_dim
         self.output_c = output_c
+        self.class2value_list = class2value_list
         self.hidden_dim = hidden_dim
         self.kernel_size = kernel_size
         self.num_layers = num_layers
         self.batch_first = batch_first
         self.bias = bias
         self.return_all_layers = return_all_layers
-        self.teacher_forcing_ratio = teacher_forcing_ratio
         self.weight_init = weight_init
-        self.residual = residual
 
         cell_list = []
         for i in range(0, self.num_layers):
@@ -146,9 +145,6 @@ class ConvLSTM(nn.Module):
         -------
         last_state_list, layer_output
         """
-        is_teacher_forcing = (
-            self.teacher_forcing_ratio > 0. or self.teacher_forcing_ratio == -1)
-
         if not self.batch_first:
             # (t, b, c, h, w) -> (b, t, c, h, w)
             input_tensor = input_tensor.permute(1, 0, 2, 3, 4)
@@ -159,11 +155,11 @@ class ConvLSTM(nn.Module):
         else:
             hidden_state = self._init_hidden(batch_size=input_tensor.size(0))
 
-        seq_len = target.size(1) if is_teacher_forcing else input_tensor.size(1)
+        seq_len = target.size(1)
 
         input_ = input_tensor
-        input_residual = input_
         output_list = []
+        pred_list = []
         for t_i in range(seq_len):
             h1_list = []
             for layer_i in range(self.num_layers):
@@ -176,24 +172,20 @@ class ConvLSTM(nn.Module):
                 input_ = h1
             stacked_h = torch.cat(h1_list, dim=1)
             logit = self.conv1x1(stacked_h)
-            if self.residual:
-                pred = torch.tanh(logit) + input_residual
-                pred = torch.clamp(pred, 0., 1.)
-                input_residual = pred
-                output_list.append(pred)
-            else:
-                pred = torch.sigmoid(logit)
-                output_list.append(logit)
-
-            if self.teacher_forcing_ratio > random.random() and self.training:
-                # target.size() = (bs, ts, c, h, w)
-                input_ = target[:, t_i, :, :, :]
-            else:
-                input_ = pred
+            class_pred = F.softmax(logit, 1).argmax(1, keepdim=True)
+            pred = torch.zeros(
+                class_pred.size(), dtype=torch.float32, device=logit.device)
+            for i in range(len(self.class2value_list)):
+                pred[class_pred == i] = self.class2value_list[i]
+            output_list.append(logit)
+            pred_list.append(pred)
+            input_ = pred
 
         # (ts, bs, c, h, w) -> (bs, ts, c, h, w)
-        return torch.stack(output_list, dim=0).permute(1, 0, 2, 3, 4), None
-        # TODO: return hiddens as second return value?
+        return (
+            torch.stack(output_list, dim=0).permute(1, 0, 2, 3, 4),
+            torch.stack(pred_list, dim=0).permute(1, 0, 2, 3, 4)
+        )
 
     def _init_hidden(self, batch_size):
         init_states = []

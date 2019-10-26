@@ -23,6 +23,8 @@ def get_loss_fn(args):
         loss_fn = nn.L1Loss(reduction='mean')
     elif args.loss.lower() == 'SmoothL1'.lower():
         loss_fn = nn.SmoothL1Loss(reduction='mean')
+    elif args.loss.lower() == 'xent':
+        loss_fn = nn.CrossEntropyLoss(reduction='mean')
     else:
         raise NotImplementedError
     return loss_fn

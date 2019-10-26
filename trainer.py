@@ -1,3 +1,4 @@
+import numpy as np
 import torch
 from tqdm import tqdm
 from utils import AverageMeter
@@ -16,17 +17,15 @@ def train(
     else:
         model.eval()
     losses = AverageMeter()
-    L1s = AverageMeter()
     MAEs = AverageMeter()
 
     pbar = tqdm(total=len(dataloader))
     for data, _ in dataloader:
         with torch.set_grad_enabled(is_training):
             bs, _, h, w, c = data[0].size()
-            output, loss, L1, MAE = step(data, model, criterion, args=args)
+            output, loss, MAE = step(data, model, criterion, args=args)
             n = bs * target_ts * h * w * c
             losses.update(loss.item(), n)
-            L1s.update(L1.item(), n)
             MAEs.update(MAE.item(), bs * int(target_ts / 6) * h * w)
 
             if is_training:
@@ -39,7 +38,7 @@ def train(
     pbar.close()
 
     return {
-        'loss': L1s.avg, 'mae': MAEs.avg,
+        'loss': losses.avg, 'mae': MAEs.avg,
     }
 
 
@@ -49,17 +48,24 @@ def step(data, model, criterion, args):
     # (bs, ts, h, w, c) -> (bs, ts, c, h, w)
     input_ = input_.permute(0, 1, 4, 2, 3)
     target = target.permute(0, 1, 4, 2, 3)
+    logit, pred = model((input_ / 255.).float(), (target / 255.).float())
 
-    output = model((input_ / 255.).float(), (target / 255.).float())
-    loss = criterion(output, (target / 255.).float())
-    L1 = criterion((output * 255.).round(), target.float())
+    _target = target.permute(0, 2, 1, 3, 4)
+    label = torch.zeros(_target.size(), dtype=torch.long, device=_target.device)
+    ls = np.linspace(0, 255, args.output_c)
+    for i in range(len(ls) - 1):
+        lower = int(ls[i])
+        upper = int(ls[i + 1])
+        label[(_target >= lower) & (_target < upper)] = i
+    label[_target >= upper] = 9
+    loss = criterion(logit.permute(0, 2, 1, 3, 4), label.squeeze(1))
 
     # loss as to 6/12/18/24hr
-    assert output.size()[1] == target.size()[1] == target_ts
-    output_eval = (output * 255.).round()[:, :, :, 40:460, 130:470]
+    assert pred.size()[1] == target.size()[1] == target_ts
+    output_eval = (pred * 255.).round()[:, :, :, 40:460, 130:470]
     target_eval = target[:, :, :, 40:460, 130:470]
     output_eval = output_eval[:, eval_indices, :, :, :]
     target_eval = target_eval[:, eval_indices, :, :, :]
     MAE = mae_fn(output_eval, target_eval.float())
 
-    return output, loss, L1, MAE
+    return pred, loss, MAE

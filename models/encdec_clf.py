@@ -1,8 +1,8 @@
-import torch
+import numpy as np
 from torch import nn
 from torch.nn import functional as F
 from .convlstm_02 import ConvLSTM
-from .convlstm3 import ConvLSTM as ConvLSTMTeacherForcing
+from .convlstm_clf import ConvLSTM as ConvLSTMClassifier
 
 
 class Encoder(nn.Module):
@@ -27,33 +27,31 @@ class Encoder(nn.Module):
 class Decoder(nn.Module):
     def __init__(self, args):
         super(Decoder, self).__init__()
-        self.is_teacher_forcing = (
-            args.teacher_forcing_ratio > 0 or args.teacher_forcing_ratio == -1)
-        self.input_dim = (
-            args.channels if self.is_teacher_forcing else args.hidden_dims[-1])
+        self.input_dim = args.channels
         self.output_c = args.output_c
         self.hidden_dims = args.hidden_dims
         self.kernel_size = args.kernel_size
         self.n_layers = args.n_layers
         self.device = args.device
 
+        self.class2value_list = []
+        ls = np.linspace(0, 255, self.output_c)
+        for i in range(len(ls) - 1):
+            lower = int(ls[i])
+            upper = int(ls[i + 1])
+            middle = int((lower + upper) / 2)
+            self.class2value_list.append(middle / 255.)
+        self.class2value_list.append(255. / 255.)
+        assert len(self.class2value_list) == self.output_c
+
         _input_size = (args.input_h, args.input_w)
-        if self.is_teacher_forcing or args.teacher_forcing_ratio == -1:
-            # -1 for (temporal) debug
-            self.convlstm1 = ConvLSTMTeacherForcing(
-                input_size=_input_size, input_dim=self.input_dim, output_c=self.output_c,
-                hidden_dim=self.hidden_dims,  kernel_size=self.kernel_size,
-                num_layers=self.n_layers,
-                batch_first=True, bias=True, return_all_layers=True,
-                teacher_forcing_ratio=args.teacher_forcing_ratio,
-                weight_init=args.weight_init, residual=args.residual)
-        else:
-            self.convlstm1 = ConvLSTM(
-                input_size=_input_size, input_dim=self.input_dim,
-                hidden_dim=self.hidden_dims,  kernel_size=self.kernel_size,
-                num_layers=self.n_layers,
-                batch_first=True, bias=True, return_all_layers=True,
-                weight_init=args.weight_init)
+        self.convlstm1 = ConvLSTMClassifier(
+            input_size=_input_size, input_dim=self.input_dim, output_c=self.output_c,
+            class2value_list=self.class2value_list,
+            hidden_dim=self.hidden_dims, kernel_size=self.kernel_size,
+            num_layers=self.n_layers,
+            batch_first=True, bias=True, return_all_layers=True,
+            weight_init=args.weight_init,)
 
     def forward(self, x, hidden_list=None, target=None):
         out, hidden_list = self.convlstm1(x, hidden_list, target)
@@ -68,9 +66,6 @@ class Model(nn.Module):
         self.h, self.w = args.height, args.width
         self.input_h, self.input_w = args.input_h, args.input_w
         self.mode = args.interpolation_mode
-        self.logit_output = args.logit_output
-        self.is_teacher_forcing = (
-            args.teacher_forcing_ratio > 0 or args.teacher_forcing_ratio == -1)
 
         self.encoder = Encoder(args)
         self.decoder = Decoder(args)
@@ -78,30 +73,21 @@ class Model(nn.Module):
     def forward(self, input_, target):
         out_e, hidden_e = self.encoder(input_)
 
-        input_d = input_[:, -1, :, :, :] if self.is_teacher_forcing else out_e
-        if self.is_teacher_forcing:
-            bs, ts, c, h, w = target.size()
-            target = F.interpolate(
-                target.view(bs * ts, c, h, w),
-                size=(self.input_h, self.input_w), mode=self.mode
-            ).view(bs, ts, c, self.input_h, self.input_w)
-        out_d, hidden_d = self.decoder(input_d, hidden_e, target)
+        input_d = input_[:, -1, :, :, :]
+        out_d, pred_d = self.decoder(input_d, hidden_e, target)
 
-        if self.is_teacher_forcing:
-            bs, ts, c, h, w = out_d.size()
-            out = out_d.contiguous().view(bs * ts, c, h, w)
-        else:
-            # out_d: list of tensor(bs, ts, c=hidden_dim, h, w)
-            out = torch.cat(out_d, dim=2)
-            bs, ts, c, h, w = out.size()
-            out = self.conv1x1(out.view(bs * ts, c, h, w))
-        if not self.logit_output:
-            out = torch.sigmoid(out)
+        bs, ts, c, h, w = out_d.size()
+        out = out_d.contiguous().view(bs * ts, c, h, w)
         out = F.interpolate(out, size=(self.h, self.w), mode=self.mode)
-        out = out.view(bs, ts, -1, self.h, self.w)
+        out = out.view(bs, ts, c, self.h, self.w)
 
-        return out
+        bs, ts, c, h, w = pred_d.size()
+        pred = pred_d.contiguous().view(bs * ts, c, h, w)
+        pred = F.interpolate(pred, size=(self.h, self.w), mode=self.mode)
+        pred = pred.view(bs, ts, c, self.h, self.w)
+
+        return out, pred
 
 
-def encdec_02(args):
+def encdec_clf(args):
     return Model(args)
