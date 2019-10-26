@@ -23,6 +23,7 @@ if __name__ == '__main__':
     # network
     parser.add_argument('--resume', type=str, default=None)
     parser.add_argument('--model', type=str, default='')
+    parser.add_argument('--output_c', type=int, default=1)
     parser.add_argument('--hidden_dims', type=int, nargs='+', default=[16, ])
     parser.add_argument('--n_layers', type=int, default=1)
     # training

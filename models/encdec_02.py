@@ -31,6 +31,7 @@ class Decoder(nn.Module):
             args.teacher_forcing_ratio > 0 or args.teacher_forcing_ratio == -1)
         self.input_dim = (
             args.channels if self.is_teacher_forcing else args.hidden_dims[-1])
+        self.output_c = args.output_c
         self.hidden_dims = args.hidden_dims
         self.kernel_size = args.kernel_size
         self.n_layers = args.n_layers
@@ -40,7 +41,7 @@ class Decoder(nn.Module):
         if self.is_teacher_forcing or args.teacher_forcing_ratio == -1:
             # -1 for (temporal) debug
             self.convlstm1 = ConvLSTMTeacherForcing(
-                input_size=_input_size, input_dim=self.input_dim,
+                input_size=_input_size, input_dim=self.input_dim, output_c=self.output_c,
                 hidden_dim=self.hidden_dims,  kernel_size=self.kernel_size,
                 num_layers=self.n_layers,
                 batch_first=True, bias=True, return_all_layers=True,

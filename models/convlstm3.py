@@ -88,7 +88,7 @@ class ConvLSTMCell(nn.Module):
 class ConvLSTM(nn.Module):
 
     def __init__(
-        self, input_size, input_dim, hidden_dim, kernel_size, num_layers,
+        self, input_size, input_dim, output_c, hidden_dim, kernel_size, num_layers,
         batch_first=False, bias=True, return_all_layers=False, teacher_forcing_ratio=0.,
         weight_init='', residual=False
     ):
@@ -106,6 +106,7 @@ class ConvLSTM(nn.Module):
         self.height, self.width = input_size
 
         self.input_dim = input_dim
+        self.output_c = output_c
         self.hidden_dim = hidden_dim
         self.kernel_size = kernel_size
         self.num_layers = num_layers
@@ -129,7 +130,7 @@ class ConvLSTM(nn.Module):
 
         self.cell_list = nn.ModuleList(cell_list)
 
-        self.conv1x1 = nn.Conv2d(sum(hidden_dim), input_dim, (1, 1), stride=1, padding=0)
+        self.conv1x1 = nn.Conv2d(sum(hidden_dim), output_c, (1, 1), stride=1, padding=0)
 
     def forward(self, input_tensor, hidden_state=None, target=None):
         """
