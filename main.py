@@ -4,6 +4,13 @@ from experiment import run
 
 
 def main(args):
+    args.model = 'encdec_clf'
+    args.output_c = 10
+    args.hidden_dims = [16, ]
+    args.n_layers = len(args.hidden_dims)
+    args.batch_size = 8
+    args.loss = 'Xent'
+    args.optim_str = 'RAdam/lr=0.001/betas=(0.9, 0.999)/weight_decay=0'
     run(args)
 
 
