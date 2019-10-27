@@ -5,10 +5,17 @@ from tester import predict
 
 
 def main(args):
-    _logdir = '../logs/20191026020439/'
-    args.checkpoint = os.path.join(_logdir, 'bestMAE.pt')
+    args.logdir = '../logs/20191026113659/'
+    args.checkpoint = os.path.join(args.logdir, 'bestMAE.pt')
+
+    factor = 4
+    args.input_h = int(672 / factor)
+    args.input_w = int(512 / factor)
+    args.input_ts = 96
+    args.last_n_ts = 24
+
     args.model = 'encdec_02'
-    args.hidden_dims = [8, 8, 8, ]
+    args.hidden_dims = [16, 16, ]
     args.n_layers = len(args.hidden_dims)
     args.loss = 'L1'
     args.logit_output = False
