@@ -18,11 +18,24 @@ eval_i, eval_j = (130, 40)
 eval_h, eval_w = 420, 340
 
 
+def main(args):
+    _logdir = '../logs/20191026020439/'
+    args.checkpoint = os.path.join(_logdir, 'bestMAE.pt')
+    args.model = 'encdec_02'
+    args.hidden_dims = [8, 8, 8, ]
+    args.n_layers = len(args.hidden_dims)
+    args.loss = 'L1'
+    args.logit_output = False
+    args.teacher_forcing_ratio = -1
+    args.residual = False
+    predict(args)
+
+
 def crop_eval_area(data):
     return data[:, :, eval_j:eval_j+eval_h, eval_i:eval_i+eval_w]
 
 
-def main(args):
+def predict(args):
     print(args)
     print('Predict with the data {}'.format(args.csv))
 
@@ -114,15 +127,14 @@ if __name__ == '__main__':
     parser.add_argument('--width', type=int, default=512)
     parser.add_argument('--channels', type=int, default=1)
     parser.add_argument('--ts', type=int, default=96)
-    factor = 8
-    parser.add_argument('--input_h', type=int, default=int(672 / factor))
-    parser.add_argument('--input_w', type=int, default=int(512 / factor))
+    parser.add_argument('--input_h', type=int, default=int(672 / 4))
+    parser.add_argument('--input_w', type=int, default=int(512 / 4))
     parser.add_argument('--input_ts', type=int, default=96)
-    parser.add_argument('--last_n_ts', type=int, default=24)
+    parser.add_argument('--output_ts', type=int, default=24)
+    parser.add_argument('--target_ts', type=int, default=24)
     parser.add_argument('--interpolation_mode', type=str, default='nearest')
     parser.add_argument('--n_workers', type=int, default=8)
     # network
-    parser.add_argument('--checkpoint', type=str)
     parser.add_argument('--model', type=str, default='')
     parser.add_argument('--output_c', type=int, default=1)
     parser.add_argument('--kernel_size', type=int, nargs='+', default=(5, 5))
@@ -134,28 +146,12 @@ if __name__ == '__main__':
     # misc
     parser.add_argument('--random_seed', type=int, default=42)
     parser.add_argument('--device', type=str, default='cuda:0')
+    # prediction
+    parser.add_argument('--checkpoint', type=str)
+    parser.add_argument('--last_n_ts', type=int, default=24)
     parser.add_argument('--dump', action='store_true', default=False)
     parser.add_argument(
         '--sample_submit', type=str, default='../inputs/sample_submit.csv')
 
     args, _ = parser.parse_known_args()
-
-    _logdir = '../logs/20191026020439/'
-    args.checkpoint = os.path.join(_logdir, 'bestMAE.pt')
-    args.model = 'encdec_02'
-    args.hidden_dims = [8, 8, 8, ]
-    args.n_layers = len(args.hidden_dims)
-    args.loss = 'L1'
-    args.logit_output = False
-    args.teacher_forcing_ratio = -1
-    args.residual = False
-
-    '''
-    logdir = os.path.dirname(args.checkpoint)
-    logpath = os.path.join(logdir, 'main.log')
-    with open(logpath, 'r') as f:
-        first_line = f.readline()
-        saved_args = eval(first_line.split(' - ')[-1])
-    saved_args.__dict__.update(args.__dict__)
-    '''
     main(args)
