@@ -90,7 +90,7 @@ class ConvLSTM(nn.Module):
     def __init__(
         self, input_size, input_dim, output_c, hidden_dim, kernel_size, num_layers,
         batch_first=False, bias=True, return_all_layers=False, teacher_forcing_ratio=0.,
-        weight_init='', residual=False
+        weight_init='',
     ):
         super(ConvLSTM, self).__init__()
 
@@ -115,7 +115,6 @@ class ConvLSTM(nn.Module):
         self.return_all_layers = return_all_layers
         self.teacher_forcing_ratio = teacher_forcing_ratio
         self.weight_init = weight_init
-        self.residual = residual
 
         cell_list = []
         for i in range(0, self.num_layers):
@@ -162,7 +161,6 @@ class ConvLSTM(nn.Module):
         seq_len = target.size(1) if is_teacher_forcing else input_tensor.size(1)
 
         input_ = input_tensor
-        input_residual = input_
         output_list = []
         for t_i in range(seq_len):
             h1_list = []
@@ -176,14 +174,8 @@ class ConvLSTM(nn.Module):
                 input_ = h1
             stacked_h = torch.cat(h1_list, dim=1)
             logit = self.conv1x1(stacked_h)
-            if self.residual:
-                pred = torch.tanh(logit) + input_residual
-                pred = torch.clamp(pred, 0., 1.)
-                input_residual = pred
-                output_list.append(pred)
-            else:
-                pred = torch.sigmoid(logit)
-                output_list.append(logit)
+            pred = torch.sigmoid(logit)
+            output_list.append(logit)
 
             if self.teacher_forcing_ratio > random.random() and self.training:
                 # target.size() = (bs, ts, c, h, w)

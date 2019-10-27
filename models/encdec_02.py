@@ -46,7 +46,7 @@ class Decoder(nn.Module):
                 num_layers=self.n_layers,
                 batch_first=True, bias=True, return_all_layers=True,
                 teacher_forcing_ratio=args.teacher_forcing_ratio,
-                weight_init=args.weight_init, residual=args.residual)
+                weight_init=args.weight_init)
         else:
             self.convlstm1 = ConvLSTM(
                 input_size=_input_size, input_dim=self.input_dim,
@@ -68,7 +68,6 @@ class Model(nn.Module):
         self.h, self.w = args.height, args.width
         self.input_h, self.input_w = args.input_h, args.input_w
         self.mode = args.interpolation_mode
-        self.logit_output = args.logit_output
         self.is_teacher_forcing = (
             args.teacher_forcing_ratio > 0 or args.teacher_forcing_ratio == -1)
 
@@ -95,7 +94,7 @@ class Model(nn.Module):
             out = torch.cat(out_d, dim=2)
             bs, ts, c, h, w = out.size()
             out = self.conv1x1(out.view(bs * ts, c, h, w))
-        if not self.logit_output:
+        if self.args.loss.lower() == 'l1':
             out = torch.sigmoid(out)
         out = F.interpolate(out, size=(self.h, self.w), mode=self.mode)
         out = out.view(bs, ts, -1, self.h, self.w)
