@@ -1,4 +1,5 @@
 import torch
+import torch.nn.functional as F
 from tqdm import tqdm
 from utils import AverageMeter
 
@@ -48,9 +49,34 @@ def step(data, model, criterion, args):
     input_ = input_.permute(0, 1, 4, 2, 3)
     target = target.permute(0, 1, 4, 2, 3)
 
-    output = model((input_ / 255.).float(), (target / 255.).float())
-    loss = criterion(output, (target / 255.).float())
-    L1 = criterion((output * 255.).round(), target.float())
+    assert args.target_ts % args.output_ts == 0
+    # TODO
+    '''
+    input_tmp = (input_ / 255.).float()
+    target_tmp = (target / 255.).float()[:, :args.output_ts]
+    output_list = []
+    for _ in range(int(args.target_ts / args.output_ts)):
+        output = model(input_tmp, target_tmp)
+    '''
+    input_tmp = (input_ / 255.).float()
+    target_tmp = (target / 255.).float()[:, :args.output_ts]
+    output = model(input_tmp, target_tmp)
+    loss = criterion(output, target_tmp)
+
+    bs, ts, c, h, w = output.size()
+    output_tmp = output.contiguous().view(bs * ts, c, h, w)
+    output_tmp = F.interpolate(
+        output_tmp, size=(args.input_h, args.input_w), mode=args.interpolation_mode)
+    output_tmp = output_tmp.view(bs, ts, c, args.input_h, args.input_w)
+    input_tmp = torch.cat([input_tmp[:, args.output_ts:], output_tmp], dim=1)
+    assert input_tmp.size()[1] == args.input_ts
+    target_tmp = (target / 255.).float()[:, args.output_ts:]
+    output2 = model(input_tmp, target_tmp)
+    loss += criterion(output2, target_tmp)
+
+    output = torch.cat([output, output2], dim=1)
+    assert output.size()[1] == target.size()[1] == args.target_ts
+    L1 = mae_fn((output * 255).round().clamp(0, 255).float(), target.float())
 
     # loss as to 6/12/18/24hr
     eval_indices = [i for i in range(args.target_ts) if i % 6 == 5]
