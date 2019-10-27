@@ -21,6 +21,10 @@ def run(args):
     # logger
     logger = utils.get_logger(os.path.join(args.logdir, 'main.log'))
     logger.info(args)
+    with open(os.path.join(args.logdir, 'args.log'), 'a') as f:
+        for k, v in sorted(args.__dict__.items()):
+            f.write('{} {}\n'.format(k, v))
+
     writer = SummaryWriter(args.logdir)
 
     # data
