@@ -3,7 +3,6 @@ from tqdm import tqdm
 from utils import AverageMeter
 
 
-target_ts = 24
 mae_fn = torch.nn.L1Loss(reduction='mean')
 eval_indices = [i for i in range(target_ts) if i % 6 == 5]
 
@@ -24,10 +23,10 @@ def train(
         with torch.set_grad_enabled(is_training):
             bs, _, h, w, c = data[0].size()
             output, loss, L1, MAE = step(data, model, criterion, args=args)
-            n = bs * target_ts * h * w * c
+            n = bs * args.target_ts * h * w * c
             losses.update(loss.item(), n)
             L1s.update(L1.item(), n)
-            MAEs.update(MAE.item(), bs * int(target_ts / 6) * h * w)
+            MAEs.update(MAE.item(), bs * int(args.target_ts / 6) * h * w)
 
             if is_training:
                 optimizer.zero_grad()
@@ -55,7 +54,7 @@ def step(data, model, criterion, args):
     L1 = criterion((output * 255.).round(), target.float())
 
     # loss as to 6/12/18/24hr
-    assert output.size()[1] == target.size()[1] == target_ts
+    eval_indices = [i for i in range(args.target_ts) if i % 6 == 5]
     output_eval = (output * 255.).round()[:, :, :, 40:460, 130:470]
     target_eval = target[:, :, :, 40:460, 130:470]
     output_eval = output_eval[:, eval_indices, :, :, :]

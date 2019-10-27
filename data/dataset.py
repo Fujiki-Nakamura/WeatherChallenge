@@ -9,9 +9,6 @@ from torch.utils.data import Dataset
 from torchvision import transforms
 
 
-TARGET_TS = 24
-
-
 def get_transforms(args):
     transform_input = transforms.Compose([
         transforms.Resize((args.input_h, args.input_w))
@@ -29,7 +26,8 @@ class WCDataset(Dataset):
         self.input_h, self.input_w = args.input_h, args.input_w
         self.ts = args.ts
         self.input_ts = args.input_ts
-        assert self.input_ts + TARGET_TS == self.ts
+        self.target_ts = args.target_ts
+        assert self.input_ts + args.target_ts == self.ts
 
         self.transform = get_transforms(args)
         if is_training:
@@ -71,7 +69,7 @@ class WCDataset(Dataset):
 
     def __getitem__(self, idx):
         input_ = np.zeros((self.input_ts, self.input_h, self.input_w, self.c))
-        target = np.zeros((TARGET_TS, self.h, self.w, self.c))
+        target = np.zeros((self.target_ts, self.h, self.w, self.c))
         impaths = []
 
         start_dt = self.start_dt_list[idx]
@@ -101,6 +99,6 @@ class WCDataset(Dataset):
 
         input_ = torch.from_numpy(input_.astype(np.float32))
         target = torch.from_numpy(target.astype(np.float32))
-        assert len(target) == TARGET_TS
+        assert len(target) == self.target_ts
 
         return (input_, target), impaths

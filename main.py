@@ -18,6 +18,7 @@ if __name__ == '__main__':
     parser.add_argument('--input_h', type=int, default=int(672 / 4))
     parser.add_argument('--input_w', type=int, default=int(512 / 4))
     parser.add_argument('--input_ts', type=int, default=24)
+    parser.add_argument('--target_ts', type=int, default=24)
     parser.add_argument('--interpolation_mode', type=str, default='nearest')
     parser.add_argument('--n_workers', type=int, default=8)
     # network
