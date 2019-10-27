@@ -4,7 +4,6 @@ from utils import AverageMeter
 
 
 mae_fn = torch.nn.L1Loss(reduction='mean')
-eval_indices = [i for i in range(target_ts) if i % 6 == 5]
 
 
 def train(
@@ -38,7 +37,7 @@ def train(
     pbar.close()
 
     return {
-        'loss': L1s.avg, 'mae': MAEs.avg,
+        'loss': losses.avg, 'L1': L1s.avg, 'mae': MAEs.avg,
     }
 
 

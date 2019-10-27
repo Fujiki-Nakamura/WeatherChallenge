@@ -2,7 +2,7 @@ import torch
 from torch import nn
 from torch.nn import functional as F
 from .convlstm_02 import ConvLSTM
-from .convlstm3 import ConvLSTM as ConvLSTMTeacherForcing
+from .convlstm3 import ConvLSTM as ConvLSTMDecoder
 
 
 class Encoder(nn.Module):
@@ -40,7 +40,7 @@ class Decoder(nn.Module):
         _input_size = (args.input_h, args.input_w)
         if self.is_teacher_forcing or args.teacher_forcing_ratio == -1:
             # -1 for (temporal) debug
-            self.convlstm1 = ConvLSTMTeacherForcing(
+            self.convlstm1 = ConvLSTMDecoder(
                 input_size=_input_size, input_dim=self.input_dim, output_c=self.output_c,
                 hidden_dim=self.hidden_dims,  kernel_size=self.kernel_size,
                 num_layers=self.n_layers,
@@ -64,6 +64,7 @@ class Decoder(nn.Module):
 class Model(nn.Module):
     def __init__(self, args):
         super(Model, self).__init__()
+        self.args = args
         self.loss = args.loss
         self.h, self.w = args.height, args.width
         self.input_h, self.input_w = args.input_h, args.input_w
@@ -81,9 +82,10 @@ class Model(nn.Module):
         if self.is_teacher_forcing:
             bs, ts, c, h, w = target.size()
             target = F.interpolate(
-                target.view(bs * ts, c, h, w),
+                target.contiguous().view(bs * ts, c, h, w),
                 size=(self.input_h, self.input_w), mode=self.mode
             ).view(bs, ts, c, self.input_h, self.input_w)
+
         out_d, hidden_d = self.decoder(input_d, hidden_e, target)
 
         if self.is_teacher_forcing:

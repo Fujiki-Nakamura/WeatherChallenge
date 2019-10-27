@@ -47,8 +47,10 @@ def run(args):
             valid_loader, model, criterion, optimizer, is_training=False,
             logger=logger, args=args)
 
-        writer.add_scalar('{}/Train'.format(args.loss), training['loss'], epoch_i)
-        writer.add_scalar('{}/Valid'.format(args.loss), validation['loss'], epoch_i)
+        writer.add_scalar('{}Loss/Train'.format(args.loss), training['loss'], epoch_i)
+        writer.add_scalar('{}Loss/Valid'.format(args.loss), validation['loss'], epoch_i)
+        writer.add_scalar('L1/Train', training['L1'], epoch_i)
+        writer.add_scalar('L1/Valid', validation['L1'], epoch_i)
         writer.add_scalar('MAE/Train', training['mae'], epoch_i)
         writer.add_scalar('MAE/Valid', validation['mae'], epoch_i)
         if epoch_i % args.freq_to_log_image == 0:

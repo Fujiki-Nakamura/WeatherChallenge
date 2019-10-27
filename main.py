@@ -25,8 +25,10 @@ if __name__ == '__main__':
     parser.add_argument('--resume', type=str, default=None)
     parser.add_argument('--model', type=str, default='')
     parser.add_argument('--output_c', type=int, default=1)
+    parser.add_argument('--kernel_size', type=int, nargs='+', default=(5, 5))
     parser.add_argument('--hidden_dims', type=int, nargs='+', default=[16, ])
     parser.add_argument('--n_layers', type=int, default=1)
+    parser.add_argument('--weight_init', type=str, default='')
     # training
     parser.add_argument('--epochs', type=int, default=100)
     parser.add_argument('--batch_size', type=int, default=128)
