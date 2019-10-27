@@ -4,11 +4,11 @@ import os
 import numpy as np
 import pandas as pd
 import torch
+from torch.utils.data import DataLoader
 from tqdm import tqdm
 
 from data import WCDataset
-import models
-from torch.utils.data import DataLoader
+import utils
 
 
 TARGET_TS = 24
@@ -44,7 +44,7 @@ def predict(args):
     for k, v in iter(checkpoint['state_dict'].items()):
         new_k = k.replace('module.', '')
         new_state_dict[new_k] = v
-    model = models.__dict__[args.model](args)
+    model = utils.get_model(args)
     model.load_state_dict(new_state_dict)
     model.to(args.device)
     model.eval()
@@ -81,7 +81,7 @@ def predict(args):
         mae = np.mean(np.abs(p - t))
         print('MAE {:.4f}'.format(mae))
     if args.dump:
-        save_dir = os.path.join(args.log_dir, args.split)
+        save_dir = os.path.join(args.logdir, args.split)
         if not os.path.exists(save_dir):
             os.makedirs(save_dir)
         path = os.path.join(save_dir, 'preds_MAE-{:.4f}.npy'.format(mae))
@@ -98,6 +98,6 @@ def predict(args):
     df = pd.read_csv(args.sample_submit, header=None)
     df.loc[:, 1:] = preds_eval.reshape(-1, eval_w)
     df = df.astype(int)
-    path = os.path.join(args.log_dir, 'submission.csv')
+    path = os.path.join(args.logdir, 'submission.csv')
     df.to_csv(path, index=False, header=False)
     print('Submission saved at {}'.format(path))

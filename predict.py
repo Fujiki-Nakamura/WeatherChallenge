@@ -43,6 +43,7 @@ if __name__ == '__main__':
     # training
     parser.add_argument('--batch_size', type=int, default=1)
     # misc
+    parser.add_argument('--logdir', type=str, default='../garbage')
     parser.add_argument('--random_seed', type=int, default=42)
     parser.add_argument('--device', type=str, default='cuda:0')
     # prediction
