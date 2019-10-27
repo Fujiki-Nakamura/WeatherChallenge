@@ -53,9 +53,12 @@ def predict(args):
     trues = np.zeros((len(test_set), TARGET_TS, eval_h, eval_w))
     pbar = tqdm(total=len(test_loader))
     for batch_i, (data, impath) in enumerate(test_loader):
-        input_ = data[0][:, args.last_n_ts:]
+        input_ = data[0][:, -args.last_n_ts:]
         target = data[1]
-        bs, ts, c, h, w = input_.size()
+        bs, ts, h, w, c = input_.size()
+        # (bs, ts, h, w, c) -> (bs, ts, c, h, w)
+        input_ = input_.permute(0, 1, 4, 2, 3)
+        target = target.permute(0, 1, 4, 2, 3)
         input_, target = input_.to(args.device), target.to(args.device)
 
         with torch.no_grad():

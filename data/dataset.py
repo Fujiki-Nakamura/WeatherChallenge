@@ -27,7 +27,10 @@ class WCDataset(Dataset):
         self.ts = args.ts
         self.input_ts = args.input_ts
         self.target_ts = args.target_ts
-        assert self.input_ts + args.target_ts == self.ts
+        if test:
+            assert self.input_ts == self.ts
+        else:
+            assert self.input_ts + args.target_ts == self.ts
 
         self.transform = get_transforms(args)
         if is_training:
