@@ -1,3 +1,4 @@
+import datetime as dt
 from collections import OrderedDict
 import os
 
@@ -11,6 +12,7 @@ from data import WCDataset
 import utils
 
 
+ID = dt.datetime.now().strftime('%Y%m%d%H%M%S')
 TARGET_TS = 24
 eval_i, eval_j = (130, 40)
 eval_h, eval_w = 420, 340
@@ -75,6 +77,7 @@ def predict(args):
         pbar.update(1)
     pbar.close()
 
+    # TODO
     '''
     mae = 0.
     if args.split.lower().startswith('valid'):
@@ -101,6 +104,6 @@ def predict(args):
     df = pd.read_csv(args.sample_submit, header=None)
     df.loc[:, 1:] = preds_eval.reshape(-1, eval_w)
     df = df.astype(int)
-    path = os.path.join(args.logdir, 'submission.csv')
+    path = os.path.join(args.logdir, f'submission_{ID}.csv')
     df.to_csv(path, index=False, header=False)
-    print('Submission saved at {}'.format(path))
+    print('Saved at {}'.format(path))
