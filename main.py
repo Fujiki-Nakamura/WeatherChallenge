@@ -4,14 +4,14 @@ from experiment import run
 
 
 def main(args):
-    f = 4
+    f = 8
     args.input_h, args.input_w = int(672 / f), int(512 / f)
     args.ts, args.input_ts, args.target_ts = 48, 24, 24
     args.output_ts = 24
     args.model = 'encdec_02'
-    args.hidden_dims = [16, 16, 16, 16, ]
+    args.hidden_dims = [64, 32, 16, ]
     args.n_layers = len(args.hidden_dims)
-    args.batch_size = 8
+    args.batch_size = 16
     args.optim_str = 'RAdam/lr=0.001/betas=(0.9, 0.999)/weight_decay=0'
     args.teacher_forcing_ratio = -1.
     run(args)
