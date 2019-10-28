@@ -17,7 +17,10 @@ def get_transforms(args):
 
 
 class WCDataset(Dataset):
-    def __init__(self, data_root, is_training=True, test=False, args=None):
+    def __init__(
+        self, data_root, is_training=True, test=False, is_training_with_2018=False,
+        args=None
+    ):
         random.seed(args.random_seed)
         self.args = args
         self.data_root = data_root
@@ -43,6 +46,18 @@ class WCDataset(Dataset):
             while current_dt <= end_dt - dt.timedelta(hours=self.ts - 1):
                 self.start_dt_list.append(current_dt)
                 current_dt += dt.timedelta(hours=1)
+
+            if is_training_with_2018:
+                df = pd.read_csv(os.path.join(self.data_root, 'inference_terms.csv'))
+                start_list = list(df.loc[:, 'OpenData_96hr_Start'].values)
+                for i in range(len(df)):
+                    start_dt = dt.datetime.strptime(start_list[i], '%Y/%m/%d %H:%M')
+                    current_dt = start_dt
+                    while current_dt <= start_dt + dt.timedelta(hours=24):
+                        self.start_dt_list.append(current_dt)
+                        current_dt += dt.timedelta(hours=1)
+                print('Added 2018 data to training. The last is from {} to {}'.format(
+                    start_dt.strftime(dt_format), current_dt.strftime(dt_format)))
         else:
             self.start_dt_list = []
             df = pd.read_csv(os.path.join(self.data_root, 'inference_terms.csv'))
@@ -52,11 +67,18 @@ class WCDataset(Dataset):
                 dt_list = []
                 start_dt = dt.datetime.strptime(start_list[i], '%Y/%m/%d %H:%M')
                 end_dt = dt.datetime.strptime(end_list[i], '%Y/%m/%d %H:%M')
-                current_dt = start_dt
+                if is_training_with_2018:
+                    current_dt = start_dt + dt.timedelta(hours=48)
+                else:
+                    current_dt = start_dt
                 while current_dt <= end_dt - dt.timedelta(hours=self.ts - 1):
                     dt_list.append(current_dt)
                     current_dt += dt.timedelta(hours=1)
                 self.start_dt_list.extend(dt_list)
+            if is_training_with_2018:
+                assert len(self.start_dt_list) == len(df)
+                print('Added 2018 data to training. Validate with {}, {}, etc'.format(
+                    self.start_dt_list[0], self.start_dt_list[1]))
 
         if test:
             self.input_ts = self.ts
