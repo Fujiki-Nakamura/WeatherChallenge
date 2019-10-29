@@ -45,12 +45,10 @@ def run(args):
         message += '[MAE] Train {train_MAE:.4f} Valid {val_MAE:.4f} (Best {best:.4f}) '
 
         training = train(
-            train_loader, model, criterion, optimizer,
-            is_training=True, is_training_with_2018=args.is_training_with_2018,
+            train_loader, model, criterion, optimizer, is_training=True,
             logger=logger, args=args)
         validation = train(
-            valid_loader, model, criterion, optimizer,
-            is_training=False, is_training_with_2018=args.is_training_with_2018,
+            valid_loader, model, criterion, optimizer, is_training=False,
             logger=logger, args=args)
 
         writer.add_scalar('{}Loss/Train'.format(args.loss), training['loss'], epoch_i)
