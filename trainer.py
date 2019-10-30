@@ -77,16 +77,18 @@ def step(data, model, criterion, args):
 
         output = torch.cat([output, output2], dim=1)
     else:
-        output = model((input_ / 255.).float(), (target / 255.).float())
-        loss = criterion(output, (target / 255.).float())
-        L1 = criterion((output * 255.).round(), target.float())
+        input_tmp = (input_ / 255.).float()
+        target_tmp = (target / 255.).float()
+        output = model(input_tmp, target_tmp)
+        loss = criterion(output, target_tmp)
 
     assert output.size()[1] == target.size()[1] == args.target_ts
-    L1 = mae_fn((output * 255).round().clamp(0, 255).float(), target.float())
+    output_255 = (output * 255).round().clamp(0, 255).float()
+    L1 = mae_fn(output_255, target.float())
 
     # loss as to 6/12/18/24hr
     eval_indices = [i for i in range(args.target_ts) if i % 6 == 5]
-    output_eval = (output * 255.).round()[:, :, :, 40:460, 130:470]
+    output_eval = output_255[:, :, :, 40:460, 130:470]
     target_eval = target[:, :, :, 40:460, 130:470]
     output_eval = output_eval[:, eval_indices, :, :, :]
     target_eval = target_eval[:, eval_indices, :, :, :]
