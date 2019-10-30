@@ -102,14 +102,24 @@ class WCDataset(Dataset):
             current_dt = start_dt + dt.timedelta(hours=ti)
             dname = current_dt.strftime('%Y-%m-%d')
             fname = current_dt.strftime('%Y-%m-%d-%H-%M')
+            if current_dt.year in [2016, 2017]:
+                split = 'train'
+            elif current_dt.year == 2018:
+                split = 'test'
+                with open(
+                    os.path.join(self.args.logdir, 'train_with_2018.log'), 'a'
+                ) as f:
+                    f.write('Train with 2018\n')
+            else:
+                raise NotImplementedError('Invalid year: {}'.format(current_dt.year))
             impath = '{split}/sat/{dname}/{fname}.fv.png'
-            split = 'train' if self.is_training else 'test'
             impath = impath.format(split=split, dname=dname, fname=fname)
             impath = os.path.join(self.data_root, impath)
             if os.path.isfile(impath):
                 im = Image.open(impath).convert('L')
             else:
-                path = os.path.join(self.args.logdir, 'notFound.list')
+                path = os.path.join(
+                    self.args.logdir, 'notFound{}.list'.format(current_dt.year))
                 with open(path, 'a') as f:
                     print('Not found {}'.format(impath), file=f)
                 continue
