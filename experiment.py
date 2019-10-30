@@ -67,15 +67,15 @@ def run(args):
             writer.add_image(
                 'Valid/Target', utils.get_images(validation['true'], args), epoch_i)
 
-        is_best = (validation['mae'] < best['MAE'], validation['loss'] < best['L1'])
+        is_best = (validation['mae'] < best['MAE'], validation['L1'] < best['L1'])
         if is_best[0]:
             best['MAE'] = validation['mae']
         if is_best[1]:
-            best['L1'] = validation['loss']
+            best['L1'] = validation['L1']
         utils.save_checkpoint({
             'epoch': epoch_i,
             'state_dict': model.state_dict(),
-            'valid/L1': validation['loss'],
+            'valid/L1': validation['L1'],
             'valid/MAE': validation['mae'],
             'best/L1': best['L1'],
             'best/MAE': best['MAE'],
