@@ -77,33 +77,25 @@ def predict(args):
         pbar.update(1)
     pbar.close()
 
-    # TODO
-    '''
-    mae = 0.
-    if args.split.lower().startswith('valid'):
-        indices = [i for i in range(24) if i % 6 == 5]
+    if args.is_making_submission:
+        # make submission
+        indices = [i for i in range(TARGET_TS) if i % 6 == 5]
+        preds_eval = preds[:, indices, :, :].reshape(-1, eval_h, eval_w)
+        df = pd.read_csv(args.sample_submit, header=None)
+        df.loc[:, 1:] = preds_eval.reshape(-1, eval_w)
+        df = df.astype(int)
+        path = os.path.join(args.logdir, f'submission_{ID}.csv')
+        df.to_csv(path, index=False, header=False)
+        print('Saved at {}'.format(path))
+    else:
+        indices = [i for i in range(TARGET_TS) if i % 6 == 5]
         p = preds[:, indices, :, :]
         t = trues[:, indices, :, :]
         mae = np.mean(np.abs(p - t))
         print('MAE {:.4f}'.format(mae))
-    if args.dump:
-        save_dir = os.path.join(args.logdir, args.split)
-        if not os.path.exists(save_dir):
-            os.makedirs(save_dir)
-        path = os.path.join(save_dir, 'preds_MAE-{:.4f}.npy'.format(mae))
+        path = os.path.join(args.logdir, 'preds_MAE-{:.4f}.npy'.format(mae))
         preds.dump(path)
         print('Dumped {}'.format(path))
-        path = os.path.join(save_dir, 'trues_MAE-{:.4f}.npy'.format(mae))
+        path = os.path.join(args.logdir, 'trues_MAE-{:.4f}.npy'.format(mae))
         trues.dump(path)
         print('Dumped {}'.format(path))
-    '''
-
-    # make submission
-    indices = [i for i in range(TARGET_TS) if i % 6 == 5]
-    preds_eval = preds[:, indices, :, :].reshape(-1, eval_h, eval_w)
-    df = pd.read_csv(args.sample_submit, header=None)
-    df.loc[:, 1:] = preds_eval.reshape(-1, eval_w)
-    df = df.astype(int)
-    path = os.path.join(args.logdir, f'submission_{ID}.csv')
-    df.to_csv(path, index=False, header=False)
-    print('Saved at {}'.format(path))

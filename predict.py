@@ -7,11 +7,13 @@ from tester import predict
 def main(args):
     args.logdir = '../logs/20191026113659/'
     args.checkpoint = os.path.join(args.logdir, 'bestMAE.pt')
+    args.is_making_submission = False
 
     factor = 4
     args.input_h = int(672 / factor)
     args.input_w = int(512 / factor)
-    args.input_ts = 96
+    args.ts = 96
+    args.input_ts = 72
     args.last_n_ts = 24
 
     args.model = 'encdec_02'
@@ -59,6 +61,7 @@ if __name__ == '__main__':
     parser.add_argument('--dump', action='store_true', default=False)
     parser.add_argument(
         '--sample_submit', type=str, default='../inputs/sample_submit.csv')
+    parser.add_argument('--is_making_submisson', action='store_true', default=False)
 
     args, _ = parser.parse_known_args()
     main(args)
