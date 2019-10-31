@@ -88,7 +88,8 @@ class ConvLSTMCell(nn.Module):
 class ConvLSTM(nn.Module):
 
     def __init__(
-        self, input_size, input_dim, output_c, hidden_dim, kernel_size, num_layers,
+        self, input_size, input_dim, output_c, output_ts,
+        hidden_dim, kernel_size, num_layers,
         batch_first=False, bias=True, return_all_layers=False, teacher_forcing_ratio=0.,
         weight_init='',
     ):
@@ -115,6 +116,7 @@ class ConvLSTM(nn.Module):
         self.return_all_layers = return_all_layers
         self.teacher_forcing_ratio = teacher_forcing_ratio
         self.weight_init = weight_init
+        self.output_ts = output_ts
 
         cell_list = []
         for i in range(0, self.num_layers):
@@ -145,9 +147,6 @@ class ConvLSTM(nn.Module):
         -------
         last_state_list, layer_output
         """
-        is_teacher_forcing = (
-            self.teacher_forcing_ratio > 0. or self.teacher_forcing_ratio == -1)
-
         if not self.batch_first:
             # (t, b, c, h, w) -> (b, t, c, h, w)
             input_tensor = input_tensor.permute(1, 0, 2, 3, 4)
@@ -158,11 +157,9 @@ class ConvLSTM(nn.Module):
         else:
             hidden_state = self._init_hidden(batch_size=input_tensor.size(0))
 
-        seq_len = target.size(1) if is_teacher_forcing else input_tensor.size(1)
-
         input_ = input_tensor
         output_list = []
-        for t_i in range(seq_len):
+        for t_i in range(self.output_ts):
             h1_list = []
             for layer_i in range(self.num_layers):
                 h0, c0 = hidden_state[layer_i]

@@ -46,7 +46,7 @@ class Decoder(nn.Module):
                 num_layers=self.n_layers,
                 batch_first=True, bias=True, return_all_layers=True,
                 teacher_forcing_ratio=args.teacher_forcing_ratio,
-                weight_init=args.weight_init)
+                weight_init=args.weight_init, output_ts=args.output_ts)
         else:
             self.convlstm1 = ConvLSTM(
                 input_size=_input_size, input_dim=self.input_dim,
@@ -75,11 +75,11 @@ class Model(nn.Module):
         self.encoder = Encoder(args)
         self.decoder = Decoder(args)
 
-    def forward(self, input_, target):
+    def forward(self, input_, target=None):
         out_e, hidden_e = self.encoder(input_)
 
         input_d = input_[:, -1, :, :, :] if self.is_teacher_forcing else out_e
-        if self.is_teacher_forcing:
+        if target is not None and self.is_teacher_forcing:
             bs, ts, c, h, w = target.size()
             target = F.interpolate(
                 target.contiguous().view(bs * ts, c, h, w),
