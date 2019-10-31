@@ -68,11 +68,12 @@ def predict(args):
 
         output = (output * 255).round().clamp(0, 255)
         output = output.type(torch.uint8).squeeze(2).cpu().numpy()
-        target = target.type(torch.uint8).squeeze(2).cpu().numpy()
         output_eval = crop_eval_area(output)
-        target_eval = crop_eval_area(target)
         preds[batch_i * bs:(batch_i + 1) * bs] = output_eval.astype(np.uint8)
-        trues[batch_i * bs:(batch_i + 1) * bs] = target_eval.astype(np.uint8)
+        if not args.is_making_submission:
+            target = target.type(torch.uint8).squeeze(2).cpu().numpy()
+            target_eval = crop_eval_area(target)
+            trues[batch_i * bs:(batch_i + 1) * bs] = target_eval.astype(np.uint8)
 
         pbar.update(1)
     pbar.close()
