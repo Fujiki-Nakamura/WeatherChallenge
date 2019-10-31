@@ -25,6 +25,7 @@ class WCDataset(Dataset):
         self.args = args
         self.data_root = data_root
         self.is_training = is_training
+        self.test = test
         self.h, self.w, self.c = args.height, args.width, args.channels
         self.input_h, self.input_w = args.input_h, args.input_w
         self.ts = args.ts
@@ -77,7 +78,7 @@ class WCDataset(Dataset):
                 print('Added 2018 data to training. Validate with {}, {}, etc'.format(
                     self.start_dt_list[0], self.start_dt_list[1]))
 
-        if test:
+        if self.test:
             self.start_dt_list = []
             df = pd.read_csv(os.path.join(self.data_root, 'inference_terms.csv'))
             start_list = list(df.loc[:, 'OpenData_96hr_Start'].values)
@@ -102,10 +103,6 @@ class WCDataset(Dataset):
                 split = 'train'
             elif current_dt.year == 2018:
                 split = 'test'
-                with open(
-                    os.path.join(self.args.logdir, 'train_with_2018.log'), 'a'
-                ) as f:
-                    f.write('Train with 2018\n')
             else:
                 raise NotImplementedError('Invalid year: {}'.format(current_dt.year))
             impath = '{split}/sat/{dname}/{fname}.fv.png'
@@ -115,7 +112,8 @@ class WCDataset(Dataset):
                 im = Image.open(impath).convert('L')
             else:
                 path = os.path.join(
-                    self.args.logdir, 'notFound{}.list'.format(current_dt.year))
+                    self.args.logdir, 'notFoundFor{}{}.list'.format(
+                        'Test' if self.test else 'Train', current_dt.year))
                 with open(path, 'a') as f:
                     print('Not found {}'.format(impath), file=f)
                 continue
