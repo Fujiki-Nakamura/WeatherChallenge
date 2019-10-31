@@ -78,7 +78,6 @@ class WCDataset(Dataset):
                     self.start_dt_list[0], self.start_dt_list[1]))
 
         if test:
-            self.input_ts = self.ts
             self.start_dt_list = []
             df = pd.read_csv(os.path.join(self.data_root, 'inference_terms.csv'))
             start_list = list(df.loc[:, 'OpenData_96hr_Start'].values)
