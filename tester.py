@@ -5,6 +5,7 @@ import os
 import numpy as np
 import pandas as pd
 import torch
+import torch.nn.functional as F
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
@@ -64,7 +65,17 @@ def predict(args):
         input_, target = input_.to(args.device), target.to(args.device)
 
         with torch.no_grad():
-            output = model((input_ / 255.).float(), (target / 255.).float())
+            target_tmp = (target / 255.).float()
+            output = model((input_ / 255.).float(), target_tmp)
+            if args.target_ts // args.output_ts == 2:
+                bs, ts, c, h, w = output.size()
+                output_tmp = output.contiguous().view(bs * ts, c, h, w)
+                output_tmp = F.interpolate(
+                    output_tmp, size=(args.input_h, args.input_w),
+                    mode=args.interpolation_mode)
+                output_tmp = output_tmp.view(bs, ts, c, args.input_h, args.input_w)
+                output2 = model(output_tmp, target_tmp)
+                output = torch.cat([output, output2], dim=1)
 
         output = (output * 255).round().clamp(0, 255)
         output = output.type(torch.uint8).squeeze(2).cpu().numpy()
