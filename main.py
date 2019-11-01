@@ -12,6 +12,7 @@ def main(args):
     args.hidden_dims = [16, 16, ]
     args.n_layers = len(args.hidden_dims)
     args.batch_size = 64
+    args.loss = 'L1+L2'
     args.optim_str = 'RAdam/lr=0.001/betas=(0.9, 0.999)/weight_decay=0'
     args.teacher_forcing_ratio = -1.
     run(args)
