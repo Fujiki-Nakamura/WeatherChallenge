@@ -45,6 +45,8 @@ def train(
 def step(data, model, criterion, args):
     input_ = data[0].to(args.device)
     target = data[1].to(args.device)
+    if args.last_n_target_ts > 0:
+        target = target[:, -args.last_n_target_ts:]
     target_ts = target.size()[1]
     # (bs, ts, h, w, c) -> (bs, ts, c, h, w)
     input_ = input_.permute(0, 1, 4, 2, 3)
@@ -70,6 +72,7 @@ def step(data, model, criterion, args):
             target_tmp = (target / 255.).float()[:, i*args.output_ts:(i+1)*args.output_ts]
             output_list.append(model(input_tmp, target_tmp))
         output = torch.cat(output_list, dim=1)
+        print('output = torch.cat(output_list, dim=1)')
     else:
         input_tmp = (input_ / 255.).float()
         target_tmp = (target / 255.).float()
