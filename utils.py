@@ -15,12 +15,19 @@ def get_model(args):
 
 
 def get_loss_fn(args):
+    def l1_plus_l2(output, target):
+        l1loss_fn = nn.L1Loss(reduction='mean')
+        l2loss_fn = nn.MSELoss(reduction='mean')
+        return l1loss_fn(output, target) + l2loss_fn(output, target)
+
     if args.loss.lower().startswith('bce'):
         loss_fn = nn.BCEWithLogitsLoss(reduction='mean')
     elif args.loss.lower().startswith('mse'):
         loss_fn = nn.MSELoss(reduction='mean')
     elif args.loss.lower().startswith('l1'):
         loss_fn = nn.L1Loss(reduction='mean')
+    elif args.loss.lower().startswith('l1+l2'):
+        loss_fn = l1_plus_l2
     elif args.loss.lower() == 'SmoothL1'.lower():
         loss_fn = nn.SmoothL1Loss(reduction='mean')
     else:
