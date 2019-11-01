@@ -27,7 +27,8 @@ def predict(args):
     print(args)
     print('Predict with the data {}'.format(args.csv))
 
-    test_set = WCDataset(args.data_root, is_training=False, test=True, args=args)
+    test_set = WCDataset(
+        args.data_root, args.csv, is_training=False, test=True, args=args)
     test_loader = DataLoader(test_set, batch_size=1, shuffle=False)
 
     checkpoint = torch.load(args.checkpoint, map_location=args.device)

@@ -18,12 +18,14 @@ def get_transforms(args):
 
 class WCDataset(Dataset):
     def __init__(
-        self, data_root, is_training=True, test=False, is_training_with_2018=False,
+        self, data_root, csv='inference_terms.csv',
+        is_training=True, test=False, is_training_with_2018=False,
         args=None
     ):
         random.seed(args.random_seed)
         self.args = args
         self.data_root = data_root
+        self.csv = csv
         self.is_training = is_training
         self.test = test
         self.h, self.w, self.c = args.height, args.width, args.channels
@@ -80,7 +82,7 @@ class WCDataset(Dataset):
 
         if self.test:
             self.start_dt_list = []
-            df = pd.read_csv(os.path.join(self.data_root, 'inference_terms.csv'))
+            df = pd.read_csv(os.path.join(self.data_root, self.csv))
             start_list = list(df.loc[:, 'OpenData_96hr_Start'].values)
             for i in range(len(df)):
                 start_dt = dt.datetime.strptime(start_list[i], '%Y/%m/%d %H:%M')
