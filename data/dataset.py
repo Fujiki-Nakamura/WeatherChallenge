@@ -19,6 +19,7 @@ def get_transforms(args):
 class WCDataset(Dataset):
     def __init__(
         self, data_root, csv='inference_terms.csv',
+        ts=48, input_ts=24, target_ts=24,
         is_training=True, test=False, is_training_with_2018=False,
         args=None
     ):
@@ -30,10 +31,10 @@ class WCDataset(Dataset):
         self.test = test
         self.h, self.w, self.c = args.height, args.width, args.channels
         self.input_h, self.input_w = args.input_h, args.input_w
-        self.ts = args.ts
-        self.input_ts = args.input_ts
-        self.target_ts = args.target_ts
-        assert self.input_ts + args.target_ts == self.ts
+        self.ts = ts
+        self.input_ts = input_ts
+        self.target_ts = target_ts
+        assert self.input_ts + self.target_ts == self.ts
 
         self.transform = get_transforms(args)
         if is_training:
