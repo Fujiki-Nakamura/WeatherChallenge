@@ -6,7 +6,8 @@ from experiment import run
 def main(args):
     f = 8
     args.input_h, args.input_w = int(672 / f), int(512 / f)
-    args.ts, args.input_ts, args.output_ts, args.target_ts = 24, 12, 12, 12
+    args.ts, args.input_ts, args.output_ts, args.target_ts = 36, 12, 12, 24
+    args.last_n_target_ts = 12
     args.is_training_with_2018 = False
     args.model = 'encdec_02'
     args.hidden_dims = [128, 64, 64, ]
