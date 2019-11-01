@@ -53,6 +53,8 @@ def predict(args):
     model.to(args.device)
     model.eval()
 
+    if not args.is_making_submission:
+        TARGET_TS = args.target_ts
     preds = np.zeros((len(test_set), TARGET_TS, eval_h, eval_w))
     trues = np.zeros((len(test_set), TARGET_TS, eval_h, eval_w))
     pbar = tqdm(total=len(test_loader))
@@ -101,14 +103,26 @@ def predict(args):
         df.to_csv(path, index=False, header=False)
         print('Saved at {}'.format(path))
     else:
-        indices = [i for i in range(TARGET_TS) if i % 6 == 5]
-        p = preds[:, indices, :, :]
-        t = trues[:, indices, :, :]
-        mae = np.mean(np.abs(p - t))
-        print('MAE {:.4f}'.format(mae))
-        path = os.path.join(args.logdir, 'preds_MAE-{:.4f}.npy'.format(mae))
+        if args.csv == 'training.csv':
+            split = '2016'
+        elif args.csv == 'validation.csv':
+            split = '2017'
+        elif args.csv == 'inference_terms.csv':
+            split = '2018'
+        else:
+            raise Exception('Invalid CSV {}'.format(args.csv))
+        if TARGET_TS == 24:
+            indices = [i for i in range(TARGET_TS) if i % 6 == 5]
+            p = preds[:, indices, :, :]
+            t = trues[:, indices, :, :]
+            mae = np.mean(np.abs(p - t))
+            print('MAE {:.4f}'.format(mae))
+        else:
+            mae = np.mean(np.abs(preds - trues))
+            print('L1 {:.4f}'.format(mae))
+        path = os.path.join(args.logdir, '{}_preds_MAE-{:.4f}.npy'.format(split, mae))
         preds.dump(path)
         print('Dumped {}'.format(path))
-        path = os.path.join(args.logdir, 'trues_MAE-{:.4f}.npy'.format(mae))
+        path = os.path.join(args.logdir, '{}_trues_MAE-{:.4f}.npy'.format(split, mae))
         trues.dump(path)
         print('Dumped {}'.format(path))
