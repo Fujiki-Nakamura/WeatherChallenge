@@ -45,49 +45,43 @@ def train(
 def step(data, model, criterion, args):
     input_ = data[0].to(args.device)
     target = data[1].to(args.device)
+    target_ts = target.size()[1]
     # (bs, ts, h, w, c) -> (bs, ts, c, h, w)
     input_ = input_.permute(0, 1, 4, 2, 3)
     target = target.permute(0, 1, 4, 2, 3)
 
-    assert args.target_ts % args.output_ts == 0
-    if args.target_ts // args.output_ts > 1:
-        # TODO
-        '''
-        input_tmp = (input_ / 255.).float()
-        target_tmp = (target / 255.).float()[:, :args.output_ts]
-        output_list = []
-        for _ in range(int(args.target_ts / args.output_ts)):
-            output = model(input_tmp, target_tmp)
-        '''
+    assert target_ts % args.output_ts == 0
+    if target_ts // args.output_ts > 1:
+        # TODO: case like input_ts=24, output_ts=12, target_ts=24
         input_tmp = (input_ / 255.).float()
         target_tmp = (target / 255.).float()[:, :args.output_ts]
         output = model(input_tmp, target_tmp)
         loss = criterion(output, target_tmp)
 
-        bs, ts, c, h, w = output.size()
-        output_tmp = output.contiguous().view(bs * ts, c, h, w)
-        output_tmp = F.interpolate(
-            output_tmp, size=(args.input_h, args.input_w), mode=args.interpolation_mode)
-        output_tmp = output_tmp.view(bs, ts, c, args.input_h, args.input_w)
-        input_tmp = torch.cat([input_tmp[:, args.output_ts:], output_tmp], dim=1)
-        assert input_tmp.size()[1] == args.input_ts
-        target_tmp = (target / 255.).float()[:, args.output_ts:]
-        output2 = model(input_tmp, target_tmp)
-        loss += criterion(output2, target_tmp)
-
-        output = torch.cat([output, output2], dim=1)
+        output_list = [output, ]
+        input_tmp = output
+        for i in range(1, int(args.target_ts // args.output_ts)):
+            bs, ts, c, h, w = input_tmp.size()
+            input_tmp = input_tmp.contiguous().view(bs * ts, c, h, w)
+            input_tmp = F.interpolate(
+                input_tmp, size=(args.input_h, args.input_w),
+                mode=args.interpolation_mode)
+            input_tmp = input_tmp.view(bs, ts, c, args.input_h, args.input_w)
+            target_tmp = (target / 255.).float()[:, i*args.output_ts:(i+1)*args.output_ts]
+            output_list.append(model(input_tmp, target_tmp))
+        output = torch.cat(output_list, dim=1)
     else:
         input_tmp = (input_ / 255.).float()
         target_tmp = (target / 255.).float()
         output = model(input_tmp, target_tmp)
         loss = criterion(output, target_tmp)
 
-    assert output.size()[1] == target.size()[1] == args.target_ts
+    assert output.size()[1] == target.size()[1] == target_ts
     output_255 = (output * 255).round().clamp(0, 255).float()
     L1 = mae_fn(output_255, target.float())
 
     # loss as to 6/12/18/24hr
-    eval_indices = [i for i in range(args.target_ts) if i % 6 == 5]
+    eval_indices = [i for i in range(target_ts) if i % 6 == 5]
     output_eval = output_255[:, :, :, 40:460, 130:470]
     target_eval = target[:, :, :, 40:460, 130:470]
     output_eval = output_eval[:, eval_indices, :, :, :]
