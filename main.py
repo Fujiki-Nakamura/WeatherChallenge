@@ -9,10 +9,10 @@ def main(args):
     args.ts, args.input_ts, args.output_ts, args.target_ts = 48, 24, 24, 24
     args.last_n_target_ts = 0
     args.is_training_with_2018 = False
-    args.model = 'encdec_02/BatchNorm=False/ConvC0=False'
+    args.model = 'encdec_02/BatchNorm=True/ConvC0=True'
     args.hidden_dims = [16, 16, ]
     args.n_layers = len(args.hidden_dims)
-    args.batch_size = 16
+    args.batch_size = 12
     args.loss = 'L1'
     args.optim_str = 'RAdam/lr=0.001/betas=(0.9, 0.999)/weight_decay=0'
     args.teacher_forcing_ratio = -1.
