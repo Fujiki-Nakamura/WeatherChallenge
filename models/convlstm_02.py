@@ -41,9 +41,7 @@ class ConvLSTMCell(nn.Module):
             out_channels=4 * self.hidden_dim,
             kernel_size=self.kernel_size, padding=self.padding,
             bias=self.bias)
-        self.conv_c_0 = nn.Conv2d(
-            self.hidden_dim, self.hidden_dim,
-            kernel_size=self.kernel_size, padding=self.padding, bias=self.bias)
+        self.Wci = nn.Parameter(torch.Tensor(self.hidden_dim, self.height, self.width))
 
         self._initialize_weights(weight_init)
 
@@ -63,7 +61,7 @@ class ConvLSTMCell(nn.Module):
         combined = torch.cat([input_tensor, h_cur], dim=1)
         combined_conv = self.conv(combined)
         # NOTE: originally hadamard product
-        wc_0 = self.conv_c_0(c_cur)
+        wc_0 = self.Wci * c_cur
 
         cc_i, cc_f, cc_o, cc_g = torch.split(
             combined_conv, self.hidden_dim, dim=1)
