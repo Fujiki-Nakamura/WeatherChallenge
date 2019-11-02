@@ -50,7 +50,7 @@ def predict(args):
     for k, v in iter(checkpoint['state_dict'].items()):
         new_k = k.replace('module.', '')
         new_state_dict[new_k] = v
-    model = utils.get_model(args)
+    model = utils.get_model(args.model, args)
     model.load_state_dict(new_state_dict)
     model.to(args.device)
     model.eval()
