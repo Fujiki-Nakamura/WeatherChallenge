@@ -6,7 +6,7 @@ from .convlstm3 import ConvLSTM as ConvLSTMDecoder
 
 
 class Encoder(nn.Module):
-    def __init__(self, args):
+    def __init__(self, args, **kwargs):
         super(Encoder, self).__init__()
         self.hidden_dims = args.hidden_dims
         self.kernel_size = args.kernel_size
@@ -17,7 +17,7 @@ class Encoder(nn.Module):
             hidden_dim=self.hidden_dims,  kernel_size=self.kernel_size,
             num_layers=self.n_layers,
             batch_first=True, bias=True, return_all_layers=True,
-            weight_init=args.weight_init)
+            weight_init=args.weight_init, **kwargs)
 
     def forward(self, x):
         out, hidden_list = self.convlstm1(x)
@@ -25,7 +25,7 @@ class Encoder(nn.Module):
 
 
 class Decoder(nn.Module):
-    def __init__(self, args):
+    def __init__(self, args, **kwargs):
         super(Decoder, self).__init__()
         self.is_teacher_forcing = (
             args.teacher_forcing_ratio > 0 or args.teacher_forcing_ratio == -1)
@@ -46,7 +46,8 @@ class Decoder(nn.Module):
                 num_layers=self.n_layers,
                 batch_first=True, bias=True, return_all_layers=True,
                 teacher_forcing_ratio=args.teacher_forcing_ratio,
-                weight_init=args.weight_init, output_ts=args.output_ts)
+                weight_init=args.weight_init, output_ts=args.output_ts,
+                **kwargs)
         else:
             self.convlstm1 = ConvLSTM(
                 input_size=_input_size, input_dim=self.input_dim,
@@ -62,7 +63,7 @@ class Decoder(nn.Module):
 
 
 class Model(nn.Module):
-    def __init__(self, args):
+    def __init__(self, args, **kwargs):
         super(Model, self).__init__()
         self.args = args
         self.loss = args.loss
@@ -72,8 +73,8 @@ class Model(nn.Module):
         self.is_teacher_forcing = (
             args.teacher_forcing_ratio > 0 or args.teacher_forcing_ratio == -1)
 
-        self.encoder = Encoder(args)
-        self.decoder = Decoder(args)
+        self.encoder = Encoder(args, **kwargs)
+        self.decoder = Decoder(args, **kwargs)
 
     def forward(self, input_, target=None):
         out_e, hidden_e = self.encoder(input_)
@@ -104,5 +105,5 @@ class Model(nn.Module):
         return out
 
 
-def encdec_02(args):
-    return Model(args)
+def encdec_02(args, **kwargs):
+    return Model(args=args, **kwargs)

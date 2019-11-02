@@ -31,7 +31,7 @@ def run(args):
     train_loader, valid_loader = data.get_dataloader(args)
 
     # network
-    model = utils.get_model(args).to(args.device)
+    model = utils.get_model(args.model, args=args).to(args.device)
     # training
     criterion = utils.get_loss_fn(args)
     optimizer = utils.get_optimizer(model, args.optim_str)

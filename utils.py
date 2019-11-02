@@ -9,8 +9,11 @@ from RAdam import RAdam
 import models
 
 
-def get_model(args):
-    model = models.__dict__[args.model](args=args)
+def get_model(config, args=None):
+    config_list = config.split('/')
+    name = config_list[0]
+    kwargs = {c.split('=')[0]: eval(c.split('=')[1]) for c in config_list[1:]}
+    model = models.__dict__[name](args=args, **kwargs)
     return model
 
 
