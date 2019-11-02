@@ -61,7 +61,7 @@ if __name__ == '__main__':
     parser.add_argument('--dump', action='store_true', default=False)
     parser.add_argument(
         '--sample_submit', type=str, default='../inputs/sample_submit.csv')
-    parser.add_argument('--is_making_submisson', action='store_true', default=False)
+    parser.add_argument('--is_making_submission', action='store_true', default=False)
 
     args, _ = parser.parse_known_args()
     main(args)
