@@ -24,6 +24,8 @@ def crop_eval_area(data):
 
 
 def predict(args):
+    global TARGET_TS
+
     print(args)
     print('Predict with the data {}'.format(args.csv))
 
@@ -72,7 +74,7 @@ def predict(args):
         with torch.no_grad():
             target_tmp = None if args.is_making_submission else (target / 255.).float()
             output = model((input_ / 255.).float(), target_tmp)
-            if args.target_ts // args.output_ts == 2:
+            if TARGET_TS // args.output_ts == 2:
                 bs, ts, c, h, w = output.size()
                 output_tmp = output.contiguous().view(bs * ts, c, h, w)
                 output_tmp = F.interpolate(
