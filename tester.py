@@ -75,17 +75,23 @@ def predict(args):
             target_tmp = None if args.is_making_submission else (target / 255.).float()
             output = model((input_ / 255.).float(), target_tmp)
             if TARGET_TS // args.output_ts == 2:
-                bs, ts, c, h, w = output.size()
-                output_tmp = output.contiguous().view(bs * ts, c, h, w)
-                output_tmp = F.interpolate(
-                    output_tmp, size=(args.input_h, args.input_w),
-                    mode=args.interpolation_mode)
-                output_tmp = output_tmp.view(bs, ts, c, args.input_h, args.input_w)
-                output2 = model(output_tmp, target_tmp)
-                output = torch.cat([output, output2], dim=1)
+                if args.do_repeat_last_pred:
+                    pass
+                else:
+                    bs, ts, c, h, w = output.size()
+                    output_tmp = output.contiguous().view(bs * ts, c, h, w)
+                    output_tmp = F.interpolate(
+                        output_tmp, size=(args.input_h, args.input_w),
+                        mode=args.interpolation_mode)
+                    output_tmp = output_tmp.view(bs, ts, c, args.input_h, args.input_w)
+                    output2 = model(output_tmp, target_tmp)
+                    output = torch.cat([output, output2], dim=1)
 
         output = (output * 255).round().clamp(0, 255)
         output = output.type(torch.uint8).squeeze(2).cpu().numpy()
+        if args.do_repeat_last_pred:
+            copied = np.stack([output[:, -1], ] * 12, axis=1)
+            output = np.concatenate([output, copied], axis=1)
         output_eval = crop_eval_area(output)
         preds[batch_i * bs:(batch_i + 1) * bs] = output_eval.astype(np.uint8)
         if not args.is_making_submission:
