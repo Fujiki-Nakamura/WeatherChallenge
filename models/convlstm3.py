@@ -37,18 +37,21 @@ class ConvLSTMCell(nn.Module):
         self.padding = kernel_size[0] // 2, kernel_size[1] // 2
         self.bias = bias
         self.bn = kwargs.get('BatchNorm', False)
+        self.do_conv_c0 = kwargs.get('ConvC0', False)
 
         self.conv = nn.Conv2d(
             in_channels=self.input_dim + self.hidden_dim,
             out_channels=4 * self.hidden_dim,
             kernel_size=self.kernel_size, padding=self.padding,
             bias=self.bias)
-        self.conv_c_0 = nn.Conv2d(
-            self.hidden_dim, self.hidden_dim,
-            kernel_size=self.kernel_size, padding=self.padding, bias=self.bias)
         if self.bn:
             self.bn1 = nn.BatchNorm2d(4 * self.hidden_dim)
-            self.bn2 = nn.BatchNorm2d(self.hidden_dim)
+        if self.do_conv_c0:
+            self.conv_c_0 = nn.Conv2d(
+                self.hidden_dim, self.hidden_dim,
+                kernel_size=self.kernel_size, padding=self.padding, bias=self.bias)
+            if self.bn:
+                self.bn2 = nn.BatchNorm2d(self.hidden_dim)
 
         self._initialize_weights(weight_init)
 
@@ -67,17 +70,24 @@ class ConvLSTMCell(nn.Module):
         # concatenate along channel axis
         combined = torch.cat([input_tensor, h_cur], dim=1)
         combined_conv = self.conv(combined)
-        # NOTE: originally hadamard product
-        wc_0 = self.conv_c_0(c_cur)
         if self.bn:
             combined_conv = self.bn1(combined_conv)
-            wc_0 = self.bn2(wc_0)
+        if self.do_conv_c0:
+            # NOTE: originally hadamard product
+            wc_0 = self.conv_c_0(c_cur)
+            if self.bn:
+                wc_0 = self.bn2(wc_0)
 
         cc_i, cc_f, cc_o, cc_g = torch.split(
             combined_conv, self.hidden_dim, dim=1)
-        i = torch.sigmoid(cc_i + wc_0)
-        f = torch.sigmoid(cc_f + wc_0)
-        o = torch.sigmoid(cc_o + wc_0)
+        if self.do_conv_c0:
+            i = torch.sigmoid(cc_i + wc_0)
+            f = torch.sigmoid(cc_f + wc_0)
+            o = torch.sigmoid(cc_o + wc_0)
+        else:
+            i = torch.sigmoid(cc_i)
+            f = torch.sigmoid(cc_f)
+            o = torch.sigmoid(cc_o)
         g = torch.tanh(cc_g)
 
         c_next = f * c_cur + i * g
