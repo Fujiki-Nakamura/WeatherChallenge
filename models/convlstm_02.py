@@ -7,7 +7,7 @@ class ConvLSTMCell(nn.Module):
 
     def __init__(
         self, input_size, input_dim, hidden_dim, kernel_size, bias,
-        n_additional_convs=0, weight_init=''
+        n_additional_convs=0, weight_init='', **kwargs
     ):
         """
         Initialize ConvLSTM cell.
@@ -35,6 +35,7 @@ class ConvLSTMCell(nn.Module):
         self.kernel_size = kernel_size
         self.padding = kernel_size[0] // 2, kernel_size[1] // 2
         self.bias = bias
+        self.bn = kwargs.get('BatchNorm', False)
 
         self.conv = nn.Conv2d(
             in_channels=self.input_dim + self.hidden_dim,
@@ -44,6 +45,9 @@ class ConvLSTMCell(nn.Module):
         self.conv_c_0 = nn.Conv2d(
             self.hidden_dim, self.hidden_dim,
             kernel_size=self.kernel_size, padding=self.padding, bias=self.bias)
+        if self.bn:
+            self.bn1 = nn.BatchNorm2d(4 * self.hidden_dim)
+            self.bn2 = nn.BatchNorm2d(self.hidden_dim)
 
         self._initialize_weights(weight_init)
 
@@ -64,6 +68,9 @@ class ConvLSTMCell(nn.Module):
         combined_conv = self.conv(combined)
         # NOTE: originally hadamard product
         wc_0 = self.conv_c_0(c_cur)
+        if self.bn:
+            combined_conv = self.bn1(combined_conv)
+            wc_0 = self.bn2(wc_0)
 
         cc_i, cc_f, cc_o, cc_g = torch.split(
             combined_conv, self.hidden_dim, dim=1)
@@ -89,7 +96,7 @@ class ConvLSTM(nn.Module):
     def __init__(
         self, input_size, input_dim, hidden_dim, kernel_size, num_layers,
         batch_first=False, bias=True, return_all_layers=False,
-        n_additional_convs=0, weight_init=''
+        n_additional_convs=0, weight_init='', **kwargs
     ):
         super(ConvLSTM, self).__init__()
 
@@ -123,7 +130,7 @@ class ConvLSTM(nn.Module):
                     input_dim=cur_input_dim, hidden_dim=self.hidden_dim[i],
                     kernel_size=self.kernel_size[i], bias=self.bias,
                     n_additional_convs=n_additional_convs,
-                    weight_init=self.weight_init)
+                    weight_init=self.weight_init, **kwargs)
             )
 
         self.cell_list = nn.ModuleList(cell_list)
