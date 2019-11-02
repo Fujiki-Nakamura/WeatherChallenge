@@ -122,9 +122,10 @@ def predict(args):
         else:
             mae = np.mean(np.abs(preds - trues))
             print('L1 {:.4f}'.format(mae))
-        path = os.path.join(args.logdir, '{}_preds_MAE-{:.4f}.npy'.format(split, mae))
-        preds.dump(path)
-        print('Dumped {}'.format(path))
-        path = os.path.join(args.logdir, '{}_trues_MAE-{:.4f}.npy'.format(split, mae))
-        trues.dump(path)
-        print('Dumped {}'.format(path))
+        if args.dump:
+            path = os.path.join(args.logdir, '{}_preds_MAE-{:.4f}.npy'.format(split, mae))
+            preds.dump(path)
+            print('Dumped {}'.format(path))
+            path = os.path.join(args.logdir, '{}_trues_MAE-{:.4f}.npy'.format(split, mae))
+            trues.dump(path)
+            print('Dumped {}'.format(path))
