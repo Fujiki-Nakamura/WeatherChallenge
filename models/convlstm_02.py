@@ -35,7 +35,6 @@ class ConvLSTMCell(nn.Module):
         self.kernel_size = kernel_size
         self.padding = kernel_size[0] // 2, kernel_size[1] // 2
         self.bias = bias
-        self.bn = kwargs.get('BatchNorm', False)
         self.do_conv_c0 = kwargs.get('ConvC0', False)
 
         self.conv = nn.Conv2d(
@@ -43,14 +42,10 @@ class ConvLSTMCell(nn.Module):
             out_channels=4 * self.hidden_dim,
             kernel_size=self.kernel_size, padding=self.padding,
             bias=self.bias)
-        if self.bn:
-            self.bn1 = nn.BatchNorm2d(4 * self.hidden_dim)
         if self.do_conv_c0:
             self.conv_c_0 = nn.Conv2d(
                 self.hidden_dim, self.hidden_dim,
                 kernel_size=self.kernel_size, padding=self.padding, bias=self.bias)
-            if self.bn:
-                self.bn2 = nn.BatchNorm2d(self.hidden_dim)
 
         self._initialize_weights(weight_init)
 
@@ -69,13 +64,9 @@ class ConvLSTMCell(nn.Module):
         # concatenate along channel axis
         combined = torch.cat([input_tensor, h_cur], dim=1)
         combined_conv = self.conv(combined)
-        if self.bn:
-            combined_conv = self.bn1(combined_conv)
         if self.do_conv_c0:
             # NOTE: originally hadamard product
             wc_0 = self.conv_c_0(c_cur)
-            if self.bn:
-                wc_0 = self.bn2(wc_0)
 
         cc_i, cc_f, cc_o, cc_g = torch.split(
             combined_conv, self.hidden_dim, dim=1)
@@ -129,6 +120,7 @@ class ConvLSTM(nn.Module):
         self.bias = bias
         self.return_all_layers = return_all_layers
         self.weight_init = weight_init
+        self.do_batchnorm = kwargs.get('BatchNorm', False)
 
         cell_list = []
         for i in range(0, self.num_layers):
@@ -144,6 +136,12 @@ class ConvLSTM(nn.Module):
             )
 
         self.cell_list = nn.ModuleList(cell_list)
+
+        if self.do_batchnorm:
+            batchnorm_list = []
+            for i in range(0, self.num_layers):
+                batchnorm_list.append(nn.BatchNorm2d(self.hidden_dim[i]))
+            self.batchnorm_list = nn.ModuleList(batchnorm_list)
 
     def forward(self, input_tensor, hidden_state=None, target=None):
         """
@@ -185,6 +183,10 @@ class ConvLSTM(nn.Module):
                     input_tensor=cur_layer_input[:, t, :, :, :],
                     cur_state=[h, c])
                 output_inner.append(h)
+
+            if self.do_batchnorm:
+                for i in range(len(output_inner)):
+                    output_inner[i] = self.batchnorm_list[layer_idx](output_inner[i])
 
             layer_output = torch.stack(output_inner, dim=1)
             cur_layer_input = layer_output

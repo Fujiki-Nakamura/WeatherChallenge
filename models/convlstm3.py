@@ -36,7 +36,6 @@ class ConvLSTMCell(nn.Module):
         self.kernel_size = kernel_size
         self.padding = kernel_size[0] // 2, kernel_size[1] // 2
         self.bias = bias
-        self.bn = kwargs.get('BatchNorm', False)
         self.do_conv_c0 = kwargs.get('ConvC0', False)
 
         self.conv = nn.Conv2d(
@@ -44,14 +43,10 @@ class ConvLSTMCell(nn.Module):
             out_channels=4 * self.hidden_dim,
             kernel_size=self.kernel_size, padding=self.padding,
             bias=self.bias)
-        if self.bn:
-            self.bn1 = nn.BatchNorm2d(4 * self.hidden_dim)
         if self.do_conv_c0:
             self.conv_c_0 = nn.Conv2d(
                 self.hidden_dim, self.hidden_dim,
                 kernel_size=self.kernel_size, padding=self.padding, bias=self.bias)
-            if self.bn:
-                self.bn2 = nn.BatchNorm2d(self.hidden_dim)
 
         self._initialize_weights(weight_init)
 
@@ -70,13 +65,9 @@ class ConvLSTMCell(nn.Module):
         # concatenate along channel axis
         combined = torch.cat([input_tensor, h_cur], dim=1)
         combined_conv = self.conv(combined)
-        if self.bn:
-            combined_conv = self.bn1(combined_conv)
         if self.do_conv_c0:
             # NOTE: originally hadamard product
             wc_0 = self.conv_c_0(c_cur)
-            if self.bn:
-                wc_0 = self.bn2(wc_0)
 
         cc_i, cc_f, cc_o, cc_g = torch.split(
             combined_conv, self.hidden_dim, dim=1)
@@ -134,6 +125,7 @@ class ConvLSTM(nn.Module):
         self.teacher_forcing_ratio = teacher_forcing_ratio
         self.weight_init = weight_init
         self.output_ts = output_ts
+        self.do_batchnorm = kwargs.get('BatchNorm', False)
 
         cell_list = []
         for i in range(0, self.num_layers):
@@ -148,6 +140,12 @@ class ConvLSTM(nn.Module):
                                           **kwargs))
 
         self.cell_list = nn.ModuleList(cell_list)
+
+        if self.do_batchnorm:
+            batchnorm_list = []
+            for i in range(0, self.num_layers):
+                batchnorm_list.append(nn.BatchNorm2d(self.hidden_dim[i]))
+            self.batchnorm_list = nn.ModuleList(batchnorm_list)
 
         self.conv1x1 = nn.Conv2d(sum(hidden_dim), output_c, (1, 1), stride=1, padding=0)
 
@@ -186,7 +184,10 @@ class ConvLSTM(nn.Module):
                 hidden_state[layer_i] = [h1, c1]
                 # h.size() = (bs, c, h, w)
                 h1_list.append(h1)
-                input_ = h1
+                if self.do_batchnorm:
+                    input_ = self.batchnorm_list[layer_i](h1)
+                else:
+                    input_ = h1
             stacked_h = torch.cat(h1_list, dim=1)
             logit = self.conv1x1(stacked_h)
             pred = torch.sigmoid(logit)
