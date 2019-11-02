@@ -72,7 +72,6 @@ def step(data, model, criterion, args):
             target_tmp = (target / 255.).float()[:, i*args.output_ts:(i+1)*args.output_ts]
             output_list.append(model(input_tmp, target_tmp))
         output = torch.cat(output_list, dim=1)
-        print('output = torch.cat(output_list, dim=1)')
     else:
         input_tmp = (input_ / 255.).float()
         target_tmp = (target / 255.).float()
