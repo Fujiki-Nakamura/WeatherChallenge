@@ -60,15 +60,17 @@ def predict(args):
     pbar = tqdm(total=len(test_loader))
     for batch_i, (data, impath) in enumerate(test_loader):
         input_ = data[0][:, -args.last_n_ts:]
-        target = data[1]
         bs, ts, h, w, c = input_.size()
         # (bs, ts, h, w, c) -> (bs, ts, c, h, w)
         input_ = input_.permute(0, 1, 4, 2, 3)
-        target = target.permute(0, 1, 4, 2, 3)
-        input_, target = input_.to(args.device), target.to(args.device)
+        input_ = input_.to(args.device)
+        if not args.is_making_submission:
+            target = data[1]
+            target = target.permute(0, 1, 4, 2, 3)
+            target = target.to(args.device)
 
         with torch.no_grad():
-            target_tmp = (target / 255.).float()
+            target_tmp = None if args.is_making_submission else (target / 255.).float()
             output = model((input_ / 255.).float(), target_tmp)
             if args.target_ts // args.output_ts == 2:
                 bs, ts, c, h, w = output.size()
