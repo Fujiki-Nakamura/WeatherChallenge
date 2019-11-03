@@ -83,6 +83,6 @@ def run(args):
         }, is_best, args.logdir)
 
         message = message.format(
-            loss=args.loss, train_loss=training['L1'], val_loss=validation['L1'],
+            loss=args.loss, train_loss=training['loss'], val_loss=validation['loss'],
             train_MAE=training['mae'], val_MAE=validation['mae'], best=best['MAE'])
         logger.info(message)
