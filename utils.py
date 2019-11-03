@@ -10,31 +10,38 @@ import loss
 import models
 
 
-def get_model(config, args=None):
+def parse_config(config):
     config_list = config.split('/')
     name = config_list[0]
     kwargs = {c.split('=')[0]: eval(c.split('=')[1]) for c in config_list[1:]}
+    return name, kwargs
+
+
+def get_model(config, args=None):
+    name, kwargs = parse_config(config)
     model = models.__dict__[name](args=args, **kwargs)
     return model
 
 
-def get_loss_fn(args):
+def get_loss_fn(config):
+    name, kwargs = parse_config(config)
+
     def l1_plus_l2(output, target):
         l1loss_fn = nn.L1Loss(reduction='mean')
         l2loss_fn = nn.MSELoss(reduction='mean')
         return l1loss_fn(output, target) + l2loss_fn(output, target)
 
-    if args.loss.lower().startswith('bce'):
+    if name.lower().startswith('bce'):
         loss_fn = nn.BCEWithLogitsLoss(reduction='mean')
-    elif args.loss.lower().startswith('mse'):
+    elif name.lower().startswith('mse'):
         loss_fn = nn.MSELoss(reduction='mean')
-    elif args.loss.lower().startswith('l1'):
+    elif name.lower().startswith('l1'):
         loss_fn = nn.L1Loss(reduction='mean')
-    elif args.loss.lower().startswith('l1+l2'):
+    elif name.lower().startswith('l1+l2'):
         loss_fn = l1_plus_l2
-    elif args.loss.lower() == 'SmoothL1'.lower():
+    elif name.lower() == 'SmoothL1'.lower():
         loss_fn = nn.SmoothL1Loss(reduction='mean')
-    elif args.loss.lower() == 'L1+GDL'.lower():
+    elif name.lower() == 'L1+GDL'.lower():
         loss_fn = loss.L1andGDL(reduction='mean', **kwargs)
     else:
         raise NotImplementedError
@@ -45,11 +52,8 @@ def get_optimizer(model, optim_str):
     torch_optim_list = ['SGD', 'Adam']
     possible_optim_list = torch_optim_list + ['RAdam', 'AdaBound']
 
-    optim_args = optim_str.split('/')
-    name = optim_args[0]
+    name, args_dict = parse_config(optim_str)
     assert name in possible_optim_list, '{} not implemented.'.format(name)
-
-    args_dict = {e.split('=')[0]: eval(e.split('=')[1]) for e in optim_args[1:]}
 
     model_params = model.parameters()
     if name in torch_optim_list:

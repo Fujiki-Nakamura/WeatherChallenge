@@ -51,7 +51,7 @@ if __name__ == '__main__':
     parser.add_argument('--epochs', type=int, default=100)
     parser.add_argument('--batch_size', type=int, default=128)
     parser.add_argument('--device', type=str, default='cuda:0')
-    parser.add_argument('--loss', type=str, default='L1')
+    parser.add_argument('--loss', type=str, default='Name/param1=1/param2=2')
     # optim
     parser.add_argument('--optim_str', type=str, default='Optim/lr=0.001/arg1=1/arg2=2')
     # log
