@@ -6,6 +6,7 @@ from torch import nn, optim
 import torchvision.utils as vutils
 import adabound
 from RAdam import RAdam
+import loss
 import models
 
 
@@ -33,6 +34,8 @@ def get_loss_fn(args):
         loss_fn = l1_plus_l2
     elif args.loss.lower() == 'SmoothL1'.lower():
         loss_fn = nn.SmoothL1Loss(reduction='mean')
+    elif args.loss.lower() == 'L1+GDL'.lower():
+        loss_fn = loss.L1_GDL
     else:
         raise NotImplementedError
     return loss_fn
