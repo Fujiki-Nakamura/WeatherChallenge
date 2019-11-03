@@ -2,26 +2,44 @@ import torch
 import torch.nn as nn
 
 
-l1loss_fn = nn.L1Loss(reduction='mean')
+class L1andGDL(nn._Loss):
+    def __init__(
+        self, coef_l1=1., coef_gdl=1., alpha=1.,
+        size_average=None, reduce=None, reduction='mean',
+        **kwargs
+    ):
+        super(L1andGDL, self).__init__(size_average, reduce, reduction)
+        self.coef_l1 = coef_l1
+        self.coef_gdl = coef_gdl
+        self.l1 = nn.L1Loss(reduction=reduction)
+        self.alpha = alpha
+        self.gdl = GDL(alpha=alpha)
+
+    def forward(self, output, target):
+        l1 = self.l1loss(output, target)
+        gdl = self.gdl(output, target)
+        return self.coef_l1 * l1 + self.coef_gdl * gdl
 
 
-def L1_GDL(output, target, alpha=1.):
-    l1 = l1loss_fn(output, target)
-    gdl = GDL(output, target, alpha=alpha)
-    return l1 + gdl
+class GDL(nn._Loss):
+    def __init__(self, alpha=1., size_average=None, reduce=None, reduction='mean'):
+        super(GDL, self).__init__(size_average, reduce, reduction)
+        self.alpha = alpha
 
+    def forward(self, output, target):
+        term1 = torch.pow(torch.abs(
+            torch.abs(output[:, :, :, 1:, :] - output[:, :, :, :-1, :]) -
+            torch.abs(target[:, :, :, 1:, :] - target[:, :, :, :-1, :])
+            ), self.alpha)
+        term2 = torch.pow(torch.abs(
+            torch.abs(output[:, :, :, :, 1:] - output[:, :, :, :, :-1]) -
+            torch.abs(target[:, :, :, :, 1:] - target[:, :, :, :, :-1])
+            ), self.alpha)
+        if self.reduction == 'mean':
+            gdl = torch.mean(term1 + term2)
+        elif self.reduction == 'sum':
+            gdl = torch.sum(term1 + term2)
+        else:
+            raise NotImplementedError('Invalid reduction {}'.format(self.reduction))
 
-def GDL(output, target, alpha=1.):
-    assert len(output.size()) == len(target.size()) == 5
-    bs, ts, c, h, w = output.size()
-    term1 = torch.pow(torch.abs(
-        torch.abs(output[:, :, :, 1:, :] - output[:, :, :, :-1, :]) -
-        torch.abs(target[:, :, :, 1:, :] - target[:, :, :, :-1, :])
-        ), alpha)
-    term2 = torch.pow(torch.abs(
-        torch.abs(output[:, :, :, :, 1:] - output[:, :, :, :, :-1]) -
-        torch.abs(target[:, :, :, :, 1:] - target[:, :, :, :, :-1])
-        ), alpha)
-    gdl = torch.mean(term1 + term2)
-
-    return gdl
+        return gdl

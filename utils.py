@@ -35,7 +35,7 @@ def get_loss_fn(args):
     elif args.loss.lower() == 'SmoothL1'.lower():
         loss_fn = nn.SmoothL1Loss(reduction='mean')
     elif args.loss.lower() == 'L1+GDL'.lower():
-        loss_fn = loss.L1_GDL
+        loss_fn = loss.L1andGDL(reduction='mean', **kwargs)
     else:
         raise NotImplementedError
     return loss_fn
