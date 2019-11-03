@@ -7,6 +7,8 @@ import data
 from trainer import train
 import utils
 
+TARGET_TS = 24
+
 
 def run(args):
     start_epoch = 1
@@ -51,12 +53,16 @@ def run(args):
             valid_loader, model, criterion, optimizer, is_training=False,
             logger=logger, args=args)
 
+        if args.target_ts == TARGET_TS:
+            suffix = ''
+        else:
+            suffix = '/target_ts={}'.format(args.target_ts)
         writer.add_scalar('{}Loss/Train'.format(args.loss), training['loss'], epoch_i)
         writer.add_scalar('{}Loss/Valid'.format(args.loss), validation['loss'], epoch_i)
-        writer.add_scalar('L1/Train', training['L1'], epoch_i)
-        writer.add_scalar('L1/Valid', validation['L1'], epoch_i)
-        writer.add_scalar('MAE/Train', training['mae'], epoch_i)
-        writer.add_scalar('MAE/Valid', validation['mae'], epoch_i)
+        writer.add_scalar('L1/Train{}'.format(suffix), training['L1'], epoch_i)
+        writer.add_scalar('L1/Valid{}'.format(suffix), validation['L1'], epoch_i)
+        writer.add_scalar('MAE/Train{}'.format(suffix), training['mae'], epoch_i)
+        writer.add_scalar('MAE/Valid{}'.format(suffix), validation['mae'], epoch_i)
         if epoch_i % args.freq_to_log_image == 0:
             writer.add_image(
                 'Train/Predict', utils.get_images(training['pred'], args), epoch_i)
