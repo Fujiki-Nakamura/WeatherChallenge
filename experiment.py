@@ -41,6 +41,7 @@ def run(args):
         model, optimizer = utils.resume(model, optimizer)
         logger.info('Loaded {} (epoch {})'.format(args.resume, start_epoch - 1))
 
+    loss_name = args.loss.split('/')[0]
     for epoch_i in range(start_epoch, args.epochs + 1):
         message = '[{expid}] Epoch {epoch_i} '.format(expid=expid, epoch_i=epoch_i)
         message += '[{loss}] Train {train_loss:.2f} Valid {val_loss:.2f} '
@@ -57,8 +58,8 @@ def run(args):
             suffix = ''
         else:
             suffix = '/target_ts={}'.format(args.target_ts)
-        writer.add_scalar('{}Loss/Train'.format(args.loss), training['loss'], epoch_i)
-        writer.add_scalar('{}Loss/Valid'.format(args.loss), validation['loss'], epoch_i)
+        writer.add_scalar('{}Loss/Train'.format(loss_name), training['loss'], epoch_i)
+        writer.add_scalar('{}Loss/Valid'.format(loss_name), validation['loss'], epoch_i)
         writer.add_scalar('L1/Train{}'.format(suffix), training['L1'], epoch_i)
         writer.add_scalar('L1/Valid{}'.format(suffix), validation['L1'], epoch_i)
         writer.add_scalar('MAE/Train{}'.format(suffix), training['mae'], epoch_i)
@@ -89,6 +90,6 @@ def run(args):
         }, is_best, args.logdir)
 
         message = message.format(
-            loss=args.loss, train_loss=training['loss'], val_loss=validation['loss'],
+            loss=loss_name, train_loss=training['loss'], val_loss=validation['loss'],
             train_MAE=training['mae'], val_MAE=validation['mae'], best=best['MAE'])
         logger.info(message)
