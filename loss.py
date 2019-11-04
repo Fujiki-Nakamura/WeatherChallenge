@@ -2,13 +2,13 @@ import torch
 import torch.nn as nn
 
 
-class L1andGDL(nn._Loss):
+class L1andGDL(nn.Module):
     def __init__(
         self, coef_l1=1., coef_gdl=1., alpha=1.,
-        size_average=None, reduce=None, reduction='mean',
+        reduction='mean',
         **kwargs
     ):
-        super(L1andGDL, self).__init__(size_average, reduce, reduction)
+        super(L1andGDL, self).__init__()
         self.coef_l1 = coef_l1
         self.coef_gdl = coef_gdl
         self.l1 = nn.L1Loss(reduction=reduction)
@@ -21,9 +21,10 @@ class L1andGDL(nn._Loss):
         return self.coef_l1 * l1 + self.coef_gdl * gdl
 
 
-class GDL(nn._Loss):
-    def __init__(self, alpha=1., size_average=None, reduce=None, reduction='mean'):
-        super(GDL, self).__init__(size_average, reduce, reduction)
+class GDL(nn.Module):
+    def __init__(self, alpha=1., reduction='mean'):
+        super(GDL, self).__init__()
+        self.reduction = reduction
         self.alpha = alpha
 
     def forward(self, output, target):
