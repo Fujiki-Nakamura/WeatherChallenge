@@ -7,6 +7,7 @@ def main(args):
     f = 8
     args.input_h, args.input_w = int(672 / f), int(512 / f)
     args.ts, args.input_ts, args.output_ts, args.target_ts = 24, 12, 12, 12
+    # args.ts, args.input_ts, args.output_ts, args.target_ts = 36, 12, 12, 24
     # args.ts, args.input_ts, args.output_ts, args.target_ts = 48, 24, 24, 24
     args.last_n_target_ts = 0
     args.is_training_with_2018 = False
@@ -17,7 +18,7 @@ def main(args):
     args.n_layers = len(args.hidden_dims)
 
     args.batch_size = 64
-    args.loss = 'L1+GDL'
+    args.loss = 'L1+GDL/alpha=2.'
     args.optim_str = 'RAdam/lr=1e-3/betas=(0.9, 0.999)/weight_decay=0'
     args.teacher_forcing_ratio = -1.
     run(args)
