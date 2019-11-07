@@ -40,6 +40,7 @@ if __name__ == '__main__':
     parser.add_argument('--interpolation_mode', type=str, default='nearest')
     parser.add_argument('--n_workers', type=int, default=8)
     parser.add_argument('--is_training_with_2018', action='store_true', default=False)
+    parser.add_argument('--random_crop_delta', type=int, default=0)
     # network
     parser.add_argument('--resume', type=str, default=None)
     parser.add_argument('--model', type=str, default='')

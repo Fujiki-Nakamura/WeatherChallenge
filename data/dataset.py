@@ -35,8 +35,10 @@ class WCDataset(Dataset):
         self.input_ts = input_ts
         self.target_ts = target_ts
         assert self.input_ts + self.target_ts == self.ts
+        self.random_crop_delta = args.random_crop_delta if is_training else 0
 
         self.transform = get_transforms(args)
+
         if is_training:
             dt_format = '%Y-%m-%d %H:%M'
             start_dt = dt.datetime.strptime('2016-01-01 00:00', dt_format)
@@ -96,6 +98,10 @@ class WCDataset(Dataset):
         input_ = np.zeros((self.input_ts, self.input_h, self.input_w, self.c))
         target = np.zeros((self.target_ts, self.h, self.w, self.c))
         impaths = []
+        dx = random.randint(-self.random_crop_delta, self.random_crop_delta)
+        dy = random.randint(-self.random_crop_delta, self.random_crop_delta)
+        if self.args.debug:
+            print('dx={}, dy={}'.format(dx, dy), end='\r')
 
         start_dt = self.start_dt_list[idx]
         for ti in range(self.ts):
@@ -113,6 +119,7 @@ class WCDataset(Dataset):
             impath = os.path.join(self.data_root, impath)
             if os.path.isfile(impath):
                 im = Image.open(impath).convert('L')
+                im = im.crop((0+dx, 0+dy, 512+dx, 672+dy))
             else:
                 path = os.path.join(
                     self.args.logdir, 'notFoundFor{}{}.list'.format(

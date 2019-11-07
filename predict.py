@@ -43,6 +43,7 @@ if __name__ == '__main__':
     parser.add_argument('--target_ts', type=int, default=24)
     parser.add_argument('--interpolation_mode', type=str, default='nearest')
     parser.add_argument('--n_workers', type=int, default=8)
+    parser.add_argument('--random_crop_delta', type=int, default=0)
     # network
     parser.add_argument('--model', type=str, default='')
     parser.add_argument('--output_c', type=int, default=1)
