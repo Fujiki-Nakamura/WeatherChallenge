@@ -12,7 +12,7 @@ def main(args):
     # args.ts, args.input_ts, args.output_ts, args.target_ts = 12, 6, 6, 6
     args.last_n_target_ts = 0
     args.is_training_with_2018 = False
-    args.random_crop_delta = 5
+    args.random_crop_delta = 10
 
     args.model = 'encdec_02/BatchNorm=False/ConvC0=True'
     args.kernel_size = (5, 5)
