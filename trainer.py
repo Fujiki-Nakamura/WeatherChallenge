@@ -43,8 +43,8 @@ def train(
 
 
 def step(data, model, criterion, args):
-    input_ = data[0].to(args.device)
-    target = data[1].to(args.device)
+    input_ = data[0]  # .to(args.device)
+    target = data[1]  # .to(args.device)
     if args.last_n_target_ts > 0:
         target = target[:, -args.last_n_target_ts:]
     target_ts = target.size()[1]
@@ -75,8 +75,12 @@ def step(data, model, criterion, args):
     else:
         input_tmp = (input_ / 255.).float()
         target_tmp = (target / 255.).float()
-        output = model(input_tmp, target_tmp)
-        loss = criterion(output, target_tmp)
+        output = model(input_tmp.to(args.device), target_tmp.to(args.device))
+
+        assert output.size()[1] == target_ts
+        loss = 0.
+        for t_i in range(target_ts):
+            loss += criterion(output[:, t_i], target_tmp[:, t_i])
 
     assert output.size()[1] == target.size()[1] == target_ts
     output_255 = (output * 255).round().clamp(0, 255).float()
