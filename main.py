@@ -14,12 +14,13 @@ def main(args):
     args.is_training_with_2018 = False
     args.random_crop_delta = 10
 
-    args.model = 'encdec_02/BatchNorm=False/ConvC0=True'
+    args.model = 'encdec_02/ConvCtm1=True'
     args.kernel_size = (5, 5)
     args.hidden_dims = [16, 16, ]
     args.n_layers = len(args.hidden_dims)
 
     args.batch_size = 16
+    args.n_workers = 8
     args.loss = 'L1'
     # args.loss = 'L1+GDL/alpha=2.'
     args.optim_str = 'RAdam/lr=1e-3/betas=(0.9, 0.999)/weight_decay=0'
