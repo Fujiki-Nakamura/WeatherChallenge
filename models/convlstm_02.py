@@ -35,7 +35,7 @@ class ConvLSTMCell(nn.Module):
         self.kernel_size = kernel_size
         self.padding = kernel_size[0] // 2, kernel_size[1] // 2
         self.bias = bias
-        self.do_conv_c0 = kwargs.get('ConvC0', False)
+        self.convCtm1 = kwargs.get('ConvCtm1', False)
         self.hadamard = kwargs.get('Hadamard', '').lower()
 
         self.conv = nn.Conv2d(
@@ -43,12 +43,26 @@ class ConvLSTMCell(nn.Module):
             out_channels=4 * self.hidden_dim,
             kernel_size=self.kernel_size, padding=self.padding,
             bias=self.bias)
-        if self.do_conv_c0:
-            self.conv_c_0 = nn.Conv2d(
+        if self.convCtm1:
+            self.convWciCtm1 = nn.Conv2d(
                 self.hidden_dim, self.hidden_dim,
                 kernel_size=self.kernel_size, padding=self.padding, bias=self.bias)
-        if self.hadamard == 'channel':
-            self.Wci = nn.Parameter(torch.Tensor(self.hidden_dim, 1, 1))
+            self.convWcfCtm1 = nn.Conv2d(
+                self.hidden_dim, self.hidden_dim,
+                kernel_size=self.kernel_size, padding=self.padding, bias=self.bias)
+            self.convWcoCtm1 = nn.Conv2d(
+                self.hidden_dim, self.hidden_dim,
+                kernel_size=self.kernel_size, padding=self.padding, bias=self.bias)
+        elif self.hadamard == 'channel':
+            _size = (self.hidden_dim, 1, 1)
+            self.Wci = nn.Parameter(torch.Tensor(*_size))
+            self.Wcf = nn.Parameter(torch.Tensor(*_size))
+            self.Wco = nn.Parameter(torch.Tensor(*_size))
+        elif self.hadamard == 'normal':
+            _size = (self.hidden_dim, self.height, self.width)
+            self.Wci = nn.Parameter(torch.Tensor(*_size))
+            self.Wcf = nn.Parameter(torch.Tensor(*_size))
+            self.Wco = nn.Parameter(torch.Tensor(*_size))
 
         self._initialize_weights(weight_init)
 
@@ -67,18 +81,21 @@ class ConvLSTMCell(nn.Module):
         # concatenate along channel axis
         combined = torch.cat([input_tensor, h_cur], dim=1)
         combined_conv = self.conv(combined)
-        if self.do_conv_c0:
-            # NOTE: originally hadamard product
-            wc_0 = self.conv_c_0(c_cur)
-        if self.hadamard == 'channel':
-            wc_0 = self.Wci * c_cur
+        if self.convCtm1:
+            WciCtm1 = self.convWciCtm1(c_cur)
+            WcfCtm1 = self.convWcfCtm1(c_cur)
+            WcoCtm1 = self.convWcoCtm1(c_cur)
+        elif self.hadamard in ['normal', 'channel']:
+            WciCtm1 = self.Wci * c_cur
+            WcfCtm1 = self.Wcf * c_cur
+            WcoCtm1 = self.Wco * c_cur
 
         cc_i, cc_f, cc_o, cc_g = torch.split(
             combined_conv, self.hidden_dim, dim=1)
-        if self.do_conv_c0 or self.hadamard == 'channel':
-            i = torch.sigmoid(cc_i + wc_0)
-            f = torch.sigmoid(cc_f + wc_0)
-            o = torch.sigmoid(cc_o + wc_0)
+        if self.convCtm1 or self.hadamard == 'channel':
+            i = torch.sigmoid(cc_i + WciCtm1)
+            f = torch.sigmoid(cc_f + WcfCtm1)
+            o = torch.sigmoid(cc_o + WcoCtm1)
         else:
             i = torch.sigmoid(cc_i)
             f = torch.sigmoid(cc_f)
