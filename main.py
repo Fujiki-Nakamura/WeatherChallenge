@@ -14,7 +14,7 @@ def main(args):
     args.is_training_with_2018 = False
     args.random_crop_delta = 10
 
-    args.model = 'encdec_02/ConvCtm1=True'
+    args.model = 'encdec_02/ConvCtm1=False/Hadamard="normal"'
     args.kernel_size = (5, 5)
     args.hidden_dims = [16, 16, ]
     args.n_layers = len(args.hidden_dims)
