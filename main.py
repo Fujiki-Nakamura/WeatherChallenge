@@ -25,7 +25,7 @@ def main(args):
     args.loss = 'L1'
     # args.loss = 'L1+GDL/alpha=2.'
     args.optim_str = 'RAdam/lr=1e-3/betas=(0.9, 0.999)/weight_decay=0'
-    args.teacher_forcing_ratio = 0.5
+    args.teacher_forcing_ratio = 0.1
     run(args)
 
 
