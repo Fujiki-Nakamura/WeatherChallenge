@@ -54,8 +54,16 @@ class ConvLSTMCell(nn.Module):
             self.convWcoCtm1 = nn.Conv2d(
                 self.hidden_dim, self.hidden_dim,
                 kernel_size=self.kernel_size, padding=self.padding, bias=self.bias)
-        if self.hadamard == 'channel':
-            self.Wci = nn.Parameter(torch.Tensor(self.hidden_dim, 1, 1))
+        elif self.hadamard == 'channel':
+            _size = (self.hidden_dim, 1, 1)
+            self.Wci = nn.Parameter(torch.Tensor(*_size))
+            self.Wcf = nn.Parameter(torch.Tensor(*_size))
+            self.Wco = nn.Parameter(torch.Tensor(*_size))
+        elif self.hadamard == 'normal':
+            _size = (self.hidden_dim, self.height, self.width)
+            self.Wci = nn.Parameter(torch.Tensor(*_size))
+            self.Wcf = nn.Parameter(torch.Tensor(*_size))
+            self.Wco = nn.Parameter(torch.Tensor(*_size))
 
         self._initialize_weights(weight_init)
 
