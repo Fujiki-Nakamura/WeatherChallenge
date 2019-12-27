@@ -5,20 +5,30 @@ from tester import predict
 
 
 def main(args):
-    args.logdir = '../logs/20191029132611/'
+    args.logdir = '../logs/20191112223141/'
     args.checkpoint = os.path.join(args.logdir, 'bestMAE.pt')
-    args.is_making_submission = True
 
     factor = 4
     args.input_h = int(672 / factor)
     args.input_w = int(512 / factor)
+    args.random_crop_delta = 0
+    '''
+    args.is_making_submission = False
+    args.ts = 96
+    args.input_ts = 72
+    args.last_n_ts = 6
+    args.output_ts = 6
+    args.target_ts = 24
+    '''
+    args.is_making_submission = True
     args.ts = 96
     args.input_ts = 96
     args.last_n_ts = 24
+    args.output_ts = 24
     args.target_ts = 0
 
-    args.model = 'encdec_02/BatchNorm=False/ConvC0=True'
-    args.hidden_dims = [64, 32, 16, ]
+    args.model = 'encdec_02/ConvCtm1=False/Hadamard="normal"'
+    args.hidden_dims = [16, 16, ]
     args.n_layers = len(args.hidden_dims)
     args.loss = 'L1'
     args.logit_output = False
@@ -57,6 +67,7 @@ if __name__ == '__main__':
     parser.add_argument('--logdir', type=str, default='../garbage')
     parser.add_argument('--random_seed', type=int, default=42)
     parser.add_argument('--device', type=str, default='cuda:0')
+    parser.add_argument('--debug', action='store_true', default=False)
     # prediction
     parser.add_argument('--checkpoint', type=str)
     parser.add_argument('--last_n_ts', type=int, default=24)

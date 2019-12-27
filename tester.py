@@ -75,16 +75,24 @@ def predict(args):
 
         with torch.no_grad():
             target_tmp = None if args.is_making_submission else (target / 255.).float()
-            output = model((input_ / 255.).float(), target_tmp)
-            if TARGET_TS // args.output_ts == 2:
+            output = model(
+                (input_ / 255.).float(),
+                None if args.is_making_submission else target_tmp[:, :args.output_ts])
+
+            output_list = [output, ]
+            for i in range(1, int(TARGET_TS // args.output_ts)):
                 bs, ts, c, h, w = output.size()
                 output_tmp = output.contiguous().view(bs * ts, c, h, w)
                 output_tmp = F.interpolate(
                     output_tmp, size=(args.input_h, args.input_w),
                     mode=args.interpolation_mode)
                 output_tmp = output_tmp.view(bs, ts, c, args.input_h, args.input_w)
-                output2 = model(output_tmp, target_tmp)
-                output = torch.cat([output, output2], dim=1)
+                output = model(
+                    output_tmp,
+                    None if args.is_making_submission
+                    else target_tmp[:, i*args.output_ts:(i+1)*args.output_ts])
+                output_list.append(output)
+            output = torch.cat(output_list, dim=1)
 
         output = (output * 255).round().clamp(0, 255)
         output = output.type(torch.uint8).squeeze(2).cpu().numpy()

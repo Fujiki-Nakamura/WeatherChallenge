@@ -15,7 +15,7 @@ def main(args):
     args.random_crop_delta = 10
 
     # args.model = 'encdec_02/ConvCtm1=False/Hadamard="normal"'
-    args.model = 'encdec_02/ConvCtm1=True'
+    args.model = 'encdec_02/ConvCtm1=True/Activation="LeakyRelu"/negative_slope=0.01'
     args.kernel_size = (5, 5)
     args.hidden_dims = [16, 16, ]
     args.n_layers = len(args.hidden_dims)
@@ -25,7 +25,7 @@ def main(args):
     args.loss = 'L1'
     # args.loss = 'L1+GDL/alpha=2.'
     args.optim_str = 'RAdam/lr=1e-3/betas=(0.9, 0.999)/weight_decay=0'
-    args.teacher_forcing_ratio = 0.1
+    args.teacher_forcing_ratio = -1
     run(args)
 
 
