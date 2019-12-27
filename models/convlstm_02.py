@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 from torch.autograd import Variable
 
 
@@ -37,6 +38,9 @@ class ConvLSTMCell(nn.Module):
         self.bias = bias
         self.convCtm1 = kwargs.get('ConvCtm1', False)
         self.hadamard = kwargs.get('Hadamard', '').lower()
+        self.activation = kwargs.get('Activation', 'Tanh').lower()
+        if self.activation == 'LeakyRelu'.lower():
+            self.negative_slope = kwargs.get('negative_slope', 0.01)
 
         self.conv = nn.Conv2d(
             in_channels=self.input_dim + self.hidden_dim,
@@ -103,7 +107,13 @@ class ConvLSTMCell(nn.Module):
         g = torch.tanh(cc_g)
 
         c_next = f * c_cur + i * g
-        h_next = o * torch.tanh(c_next)
+        if self.activation == 'Tanh'.lower():
+            h_next = o * torch.tanh(c_next)
+        elif self.activation == 'LeakyRelu'.lower():
+            h_next = o * F.leaky_relu(c_next, negative_slope=self.negative_slope)
+        else:
+            raise NotImplementedError(
+                '{} not implemented'.format(self.activation))
 
         return h_next, c_next
 
