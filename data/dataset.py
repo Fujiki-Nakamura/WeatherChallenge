@@ -136,6 +136,7 @@ class WCDataset(Dataset):
                 target[ti - self.input_ts] = np.asarray(im)[:, :, np.newaxis]
             impaths.append(impath)
 
+        input_ = input_ / 255.
         input_ = torch.from_numpy(input_.astype(np.float32))
         target = torch.from_numpy(target.astype(np.float32))
         assert len(target) == self.target_ts

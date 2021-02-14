@@ -73,13 +73,11 @@ def step(data, model, criterion, args):
             output_list.append(model(input_tmp, target_tmp))
         output = torch.cat(output_list, dim=1)
     else:
-        input_tmp = (input_ / 255.).float()
-        target_tmp = (target / 255.).float()
-        output = model(input_tmp, target_tmp)
-        loss = criterion(output, target_tmp)
+        output = model(input_, None)
+        output_255 = (output * 255).round().clamp(0, 255).float()
+        loss = criterion(output_255, target)
 
     assert output.size()[1] == target.size()[1] == target_ts
-    output_255 = (output * 255).round().clamp(0, 255).float()
     L1 = mae_fn(output_255, target.float())
 
     # loss as to 6/12/18/24hr
